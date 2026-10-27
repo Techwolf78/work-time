@@ -129,15 +129,14 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
 
       {/* Right: Agent Status, Privacy, Quick Punch, Role Switcher, Notifications, User Menu */}
       <div className="flex items-center gap-2.5 shrink-0">
-        {/* Download WorkPulse Desktop App */}
+        {/* Windows Desktop Agent Download Trigger */}
         <button
           onClick={() => setShowDownloadModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition-all active:scale-95 cursor-pointer"
-          title="Download WorkPulse Desktop Agent for Windows (.exe)"
+          className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-gray-100 border border-transparent hover:border-surface-border transition-all"
+          title="Download Windows Desktop Agent (.exe)"
         >
-          <Download className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Download App</span>
-          <span className="sm:hidden">App</span>
+          <Download className="w-3.5 h-3.5 text-gray-700" />
+          <span>Desktop App</span>
         </button>
 
         {/* Live Windows Endpoint Telemetry Badge */}

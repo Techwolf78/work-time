@@ -1,16 +1,6 @@
 import React from "react";
 import { Modal } from "../ui/Modal";
-import {
-  Download,
-  Laptop,
-  CheckCircle2,
-  ShieldCheck,
-  Zap,
-  Sparkles,
-  ArrowRight,
-  Monitor,
-  Check,
-} from "lucide-react";
+import { Download, Laptop, Check, ShieldCheck, Clock } from "lucide-react";
 import { Button } from "../ui/Button";
 
 export interface DownloadAgentModalProps {
@@ -35,143 +25,112 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
       isOpen={isOpen}
       onClose={onClose}
       title={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-sm">
-            <Laptop className="w-5 h-5" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-900 flex items-center justify-center border border-gray-200">
+            <Laptop className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-950 flex items-center gap-2">
-              WorkPulse for Windows
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                v1.2 Native Win32
-              </span>
+            <h3 className="text-base font-semibold text-text-primary">
+              Windows Desktop Agent
             </h3>
             <p className="text-xs text-text-muted">
-              Professional autonomous background telemetry • 100% Zero Terminal / No Console
+              WorkPulse client for automated workstation presence tracking
             </p>
           </div>
         </div>
       }
       size="lg"
       footer={
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3">
+        <div className="flex items-center justify-between w-full">
           <span className="text-xs text-text-muted flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            Runs securely in user space • Zero admin permissions required
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            Runs in user space • No administrative privileges required
           </span>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" onClick={onClose} className="w-full sm:w-auto text-xs">
-              Close
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={onClose} size="sm">
+              Cancel
             </Button>
             <Button
               variant="primary"
+              size="sm"
               onClick={handleDownload}
-              className="w-full sm:w-auto text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+              className="gap-1.5"
             >
               <Download className="w-3.5 h-3.5" />
-              Download WorkPulse.exe (22 KB)
+              Download .exe (22 KB)
             </Button>
           </div>
         </div>
       }
     >
-      <div className="space-y-6 text-sm">
-        {/* Hero Download Card */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950 p-6 text-white shadow-md border border-gray-800">
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-            <div className="space-y-1.5 max-w-md">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Single Standalone Executable
-              </div>
-              <h4 className="text-lg font-bold text-white tracking-tight">
-                One-Click Windows Desktop App
-              </h4>
-              <p className="text-xs text-gray-300 leading-relaxed">
-                Normal employees never have to see an ugly black terminal or run command lines.
-                Double-click to link your corporate workstation in 5 seconds.
-              </p>
-            </div>
-
-            <button
-              onClick={handleDownload}
-              className="group shrink-0 px-5 py-3 rounded-xl bg-white text-gray-950 hover:bg-gray-100 font-semibold text-xs transition-all shadow-md active:scale-95 flex items-center gap-2.5"
-            >
-              <Download className="w-4 h-4 text-indigo-600 group-hover:translate-y-0.5 transition-transform" />
-              <div className="text-left">
-                <div className="text-xs font-bold leading-tight">Download WorkPulse.exe</div>
-                <div className="text-[10px] text-gray-500 font-normal">Windows 10 / 11 • 22.5 KB</div>
-              </div>
-            </button>
-          </div>
+      <div className="space-y-4 text-sm">
+        {/* Intro */}
+        <div className="p-3.5 bg-gray-50 border border-surface-border rounded-lg text-text-secondary text-xs leading-relaxed">
+          The WorkPulse desktop agent runs in your Windows system tray. It eliminates manual timesheets by tracking active window presence and idle periods automatically.
         </div>
 
-        {/* 3 Step Visual Installation Guide */}
+        {/* 3 Step Setup */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-indigo-600" />
-            How It Works for Every Employee (Zero Technical Knowledge Needed)
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2.5">
+            Quick Setup Guide
           </h4>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            {/* Step 1 */}
-            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200/80 hover:border-indigo-300 transition-colors">
-              <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center mb-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="p-3 bg-white border border-surface-border rounded-lg">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-900 text-[11px] font-semibold mb-2">
                 1
-              </div>
-              <h5 className="text-xs font-bold text-gray-950 mb-1">Download & Double-Click</h5>
-              <p className="text-xs text-text-muted leading-relaxed">
-                Click download to get <strong>WorkPulse.exe</strong>. Place it on your Desktop or Downloads. No installation setup wizard required.
+              </span>
+              <p className="font-medium text-xs text-text-primary">Download Executable</p>
+              <p className="text-[11px] text-text-secondary mt-1">
+                Save <strong>WorkPulse.exe</strong> to your computer. No installation wizard required.
               </p>
             </div>
 
-            {/* Step 2 */}
-            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200/80 hover:border-indigo-300 transition-colors">
-              <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center mb-2.5">
+            <div className="p-3 bg-white border border-surface-border rounded-lg">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-900 text-[11px] font-semibold mb-2">
                 2
-              </div>
-              <h5 className="text-xs font-bold text-gray-950 mb-1">Enter Work Email Once</h5>
-              <p className="text-xs text-text-muted leading-relaxed">
-                A clean native Windows dialog will open on Day 1. Enter your registered CRM email address and click <strong>"Pair Workstation"</strong>.
+              </span>
+              <p className="font-medium text-xs text-text-primary">Enter Work Email</p>
+              <p className="text-[11px] text-text-secondary mt-1">
+                Open the app and enter your corporate CRM email once to link your workstation.
               </p>
             </div>
 
-            {/* Step 3 */}
-            <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 hover:border-emerald-300 transition-colors">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center mb-2.5">
+            <div className="p-3 bg-white border border-surface-border rounded-lg">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold mb-2">
                 3
-              </div>
-              <h5 className="text-xs font-bold text-gray-950 mb-1">Silent System Tray</h5>
-              <p className="text-xs text-text-muted leading-relaxed">
-                The window closes and docks into your <strong>System Tray</strong> (next to the Windows clock) with an emerald pulse dot. 100% background operation!
+              </span>
+              <p className="font-medium text-xs text-text-primary">System Tray Sync</p>
+              <p className="text-[11px] text-text-secondary mt-1">
+                The agent docks quietly next to the Windows clock and starts telemetry in the background.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Feature Comparison / FAQ */}
-        <div className="p-4 rounded-xl bg-gray-50/80 border border-gray-200 space-y-2.5">
-          <h5 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            Enterprise Guardrails & Transparency
-          </h5>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600">
+        {/* Technical Details */}
+        <div className="space-y-2 pt-1">
+          <div className="p-2.5 bg-gray-50 border border-surface-border rounded-lg flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span><strong>No console window:</strong> 0% command prompt visibility</span>
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="font-medium text-text-primary">No Command Line / Terminal</span>
             </div>
+            <span className="text-[11px] text-text-muted">Compiled native Win32 executable</span>
+          </div>
+
+          <div className="p-2.5 bg-gray-50 border border-surface-border rounded-lg flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span><strong>Zero dependencies:</strong> Pre-installed .NET 4.8 runtime</span>
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="font-medium text-text-primary">Single Sign-On Pairing</span>
             </div>
+            <span className="text-[11px] text-text-muted">Config stored in %APPDATA%\WorkPulse</span>
+          </div>
+
+          <div className="p-2.5 bg-gray-50 border border-surface-border rounded-lg flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span><strong>Auto-login:</strong> Remembers your workstation identity permanently</span>
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="font-medium text-text-primary">Privacy by Design</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span><strong>Privacy-first:</strong> Only detects active app name and idle ticks</span>
-            </div>
+            <span className="text-[11px] text-text-muted">Only active application name and idle ticks</span>
           </div>
         </div>
       </div>

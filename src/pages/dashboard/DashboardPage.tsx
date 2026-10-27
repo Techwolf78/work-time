@@ -362,54 +362,42 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* WorkPulse Windows Desktop Agent Banner */}
-      <Card className="p-5 border border-indigo-200 bg-gradient-to-r from-indigo-50/70 via-white to-indigo-50/40 shadow-xs">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Laptop className="w-5 h-5" />
-            </div>
+      {/* Zero Devices Agent Setup Card */}
+      {devices.length === 0 && !isLoading && (
+        <Card className="p-4 sm:p-5 border border-gray-200 bg-white shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-bold text-gray-950">
-                  WorkPulse for Windows (Desktop Agent)
+              <div className="flex items-center gap-2">
+                <Laptop className="w-4 h-4 text-gray-900" />
+                <h3 className="text-sm font-semibold text-gray-950">
+                  Connect Windows Desktop Agent
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Zero Terminal • Native Win32
-                </span>
-                {onlineDevicesCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-800">
-                    {onlineDevicesCount} Active in Fleet
-                  </span>
-                )}
               </div>
-              <p className="text-xs text-text-muted max-w-2xl leading-relaxed">
-                Autonomous background presence tracking for employees. No console commands or ugly terminal windows.
-                Docks silently into the Windows System Tray by your clock with one-click setup.
+              <p className="text-xs text-text-muted">
+                Download the lightweight Windows agent to automatically sync workstation activity and focus time.
               </p>
             </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDownloadModal(true)}
+                className="text-xs"
+              >
+                Setup Guide
+              </Button>
+              <a
+                href="/downloads/WorkPulse.exe"
+                download="WorkPulse.exe"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-button text-xs font-medium bg-gray-950 text-white hover:bg-black shadow-xs transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download .exe</span>
+              </a>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDownloadModal(true)}
-              className="text-xs text-gray-700 hover:text-gray-900 border-gray-300 w-full sm:w-auto"
-            >
-              Setup Guide
-            </Button>
-            <a
-              href="/downloads/WorkPulse.exe"
-              download="WorkPulse.exe"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-95 w-full sm:w-auto"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download (.exe)</span>
-            </a>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* Super Admin & Manager: Live Agent Activity Table */}
       {(isSuperAdmin || isManager) && (
