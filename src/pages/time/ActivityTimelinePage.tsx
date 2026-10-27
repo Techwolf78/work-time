@@ -54,20 +54,44 @@ export function ActivityTimelinePage() {
   useEffect(() => {
     fetchCrmEmployees().then((staff) => {
       setCrmStaff(staff);
-      if (staff.length > 0 && !selectedEmpEmail) {
-        setSelectedEmpEmail(staff[0].email.toLowerCase());
-      }
     });
 
     const unsubDevices = subscribeToTelemetryDevices((devs) => {
       setDevices(devs);
-      if (devs.length > 0 && !selectedEmpEmail) {
-        setSelectedEmpEmail(devs[0].employeeEmail.toLowerCase());
-      }
     });
 
     return () => unsubDevices();
   }, []);
+
+  // Unified, deduplicated employees from CRM + active devices
+  const availableEmployees = useMemo(() => {
+    const map = new Map<string, { email: string; name: string }>();
+    crmStaff.forEach((s) => {
+      const email = s.email?.trim().toLowerCase();
+      if (email && !map.has(email)) {
+        map.set(email, { email, name: s.name });
+      }
+    });
+    devices.forEach((d) => {
+      const email = d.employeeEmail?.trim().toLowerCase();
+      if (email && !map.has(email)) {
+        map.set(email, { email, name: d.employeeName || email.split("@")[0] });
+      }
+    });
+    const list = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    if (list.length === 0) {
+      const defaultEmail = (user?.email || "ajay@gryphonacademy.co.in").toLowerCase();
+      list.push({ email: defaultEmail, name: user?.name || "Ajay Pawar" });
+    }
+    return list;
+  }, [crmStaff, devices, user]);
+
+  // Ensure an employee is selected once availableEmployees load
+  useEffect(() => {
+    if (!selectedEmpEmail && availableEmployees.length > 0) {
+      setSelectedEmpEmail(availableEmployees[0].email);
+    }
+  }, [availableEmployees, selectedEmpEmail]);
 
   // Subscribe to Activity Logs for selected employee & date
   useEffect(() => {
@@ -150,23 +174,11 @@ export function ActivityTimelinePage() {
                 onChange={(e) => setSelectedEmpEmail(e.target.value)}
                 className="bg-transparent font-medium text-gray-900 focus:outline-none cursor-pointer pr-2 max-w-[200px] truncate"
               >
-                {crmStaff.length > 0 ? (
-                  crmStaff.map((staff) => (
-                    <option key={staff.email} value={staff.email.toLowerCase()}>
-                      {staff.name} ({staff.email})
-                    </option>
-                  ))
-                ) : devices.length > 0 ? (
-                  devices.map((d) => (
-                    <option key={d.id} value={d.employeeEmail.toLowerCase()}>
-                      {d.employeeName} ({d.employeeEmail})
-                    </option>
-                  ))
-                ) : (
-                  <option value={user?.email || "ajay@gryphonacademy.co.in"}>
-                    {user?.name || "Ajay Pawar"} ({user?.email || "ajay@gryphonacademy.co.in"})
+                {availableEmployees.map((emp) => (
+                  <option key={emp.email} value={emp.email}>
+                    {emp.name} ({emp.email})
                   </option>
-                )}
+                ))}
               </select>
             </div>
 
@@ -274,7 +286,7 @@ export function ActivityTimelinePage() {
                     "rounded-xs transition-all cursor-pointer relative group flex items-center justify-center",
                     bgClass
                   )}
-                  title={`[${int.startDisplay || int.startTime} - ${int.endDisplay || int.endTime}] ${int.executable}: ${int.windowTitle} (${int.durationDisplay})`}
+                  title={`[${int.startDisplay || (typeof int.startTime === "string" ? int.startTime : "")} - ${int.endDisplay || (typeof int.endTime === "string" ? int.endTime : "")}] ${int.executable}: ${int.windowTitle} (${int.durationDisplay})`}
                 >
                   <span className="text-[9px] text-white font-medium truncate px-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {int.executable}
@@ -374,8 +386,8 @@ export function ActivityTimelinePage() {
                 filteredIntervals.map((int) => (
                   <tr key={int.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-2.5 px-4 font-mono text-[11px] text-gray-700 whitespace-nowrap">
-                      {int.startDisplay || int.startTime.substring(11, 16)} -{" "}
-                      {int.endDisplay || int.endTime.substring(11, 16)}
+                      {(int.startDisplay || (typeof int.startTime === "string" && int.startTime.length >= 16 ? int.startTime.substring(11, 16) : "--:--"))} -{" "}
+                      {(int.endDisplay || (typeof int.endTime === "string" && int.endTime.length >= 16 ? int.endTime.substring(11, 16) : "--:--"))}
                     </td>
                     <td className="py-2.5 px-4 font-semibold text-gray-900 whitespace-nowrap">
                       {int.durationDisplay}

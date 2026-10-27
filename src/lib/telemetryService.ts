@@ -170,6 +170,50 @@ export function subscribeToTelemetryDevices(
 }
 
 /**
+ * Helper to safely extract an ISO string from a Firestore Timestamp, Date, string, or number
+ */
+export function parseTimestampToIso(val: any): string {
+  if (!val) return "";
+  if (typeof val === "string") return val;
+  if (typeof val.toDate === "function") {
+    try {
+      return val.toDate().toISOString();
+    } catch {
+      return "";
+    }
+  }
+  if (typeof val.seconds === "number") {
+    return new Date(val.seconds * 1000).toISOString();
+  }
+  if (typeof val === "number") {
+    return new Date(val).toISOString();
+  }
+  if (val instanceof Date) {
+    return val.toISOString();
+  }
+  return "";
+}
+
+/**
+ * Helper to safely extract a HH:mm display string from a timestamp or ISO string
+ */
+export function parseTimeToDisplay(val: any, fallbackIso?: string): string {
+  if (val && typeof val === "string" && val.length >= 5) {
+    if (val.includes("T")) {
+      const parts = val.split("T")[1];
+      return parts ? parts.substring(0, 5) : val.substring(0, 5);
+    }
+    return val.substring(0, 5);
+  }
+  const iso = parseTimestampToIso(val) || fallbackIso;
+  if (iso && iso.includes("T")) {
+    const parts = iso.split("T")[1];
+    return parts ? parts.substring(0, 5) : "";
+  }
+  return "--:--";
+}
+
+/**
  * 2. Subscribe to Activity Intervals for Timeline
  */
 export function subscribeToActivityLogs(
@@ -186,6 +230,13 @@ export function subscribeToActivityLogs(
       let logs: ActivityIntervalRecord[] = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
+        const startIso = parseTimestampToIso(data.startTime);
+        const endIso = parseTimestampToIso(data.endTime);
+        const startDisplay = data.startDisplay || parseTimeToDisplay(data.startTime, startIso);
+        const endDisplay = data.endDisplay || parseTimeToDisplay(data.endTime, endIso);
+        const durationSec = Number(data.durationSeconds) || 0;
+        const durationMin = Math.round(durationSec / 60);
+
         logs.push({
           id: docSnap.id,
           intervalId: data.intervalId || docSnap.id,
@@ -193,16 +244,16 @@ export function subscribeToActivityLogs(
           employeeEmail: data.employeeEmail || "",
           employeeName: data.employeeName || "",
           deviceId: data.deviceId || "",
-          date: data.date || "",
-          startTime: data.startTime || "",
-          endTime: data.endTime || "",
-          startDisplay: data.startDisplay || "",
-          endDisplay: data.endDisplay || "",
-          durationSeconds: data.durationSeconds || 0,
-          durationMinutes: data.durationMinutes || 0,
-          durationDisplay: data.durationDisplay || "0m",
+          date: data.date || (startIso ? startIso.substring(0, 10) : ""),
+          startTime: startIso,
+          endTime: endIso,
+          startDisplay: startDisplay,
+          endDisplay: endDisplay,
+          durationSeconds: durationSec,
+          durationMinutes: durationMin,
+          durationDisplay: data.durationDisplay || formatSecondsToDuration(durationSec),
           state: (data.state as any) || "active",
-          executable: data.executable || "System",
+          executable: data.executable || data.application || "System",
           windowTitle: data.windowTitle || "",
           category: (data.category as any) || "work",
           inactivityReason: data.inactivityReason,
@@ -212,18 +263,23 @@ export function subscribeToActivityLogs(
 
       // Filter in-memory for requested employeeId and/or date
       if (options.employeeId) {
+        const target = options.employeeId.toLowerCase().trim();
         logs = logs.filter(
           (l) =>
-            l.employeeId === options.employeeId ||
-            l.employeeEmail === options.employeeId
+            l.employeeId.toLowerCase().trim() === target ||
+            (l.employeeEmail && l.employeeEmail.toLowerCase().trim() === target)
         );
       }
       if (options.date) {
         logs = logs.filter((l) => l.date === options.date);
       }
 
-      // Sort chronologically ascending
-      logs.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+      // Sort chronologically ascending safely
+      logs.sort((a, b) => {
+        const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
+        const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
+        return timeA - timeB;
+      });
 
       if (options.limitCount && logs.length > options.limitCount) {
         logs = logs.slice(-options.limitCount);
