@@ -1,15 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Shield,
-  CheckCircle2,
-  Lock,
-  Mail,
-  ArrowRight,
-  AlertCircle,
-} from "lucide-react";
+import { Lock, Mail, ArrowRight, AlertCircle, Download } from "lucide-react";
 import { useAuth } from "../../lib/authContext";
-import { activeEnv, firebaseConfig } from "../../lib/firebase";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { GaHrmsLogo } from "../../components/ui/GaHrmsLogo";
@@ -24,7 +16,6 @@ export function LoginPage() {
   const { loginWithFirebase, authError, clearAuthError } = useAuth();
   const navigate = useNavigate();
 
-  // Primary Login using live Gryphon CRM Firebase Auth
   const handleFirebaseLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {
@@ -47,88 +38,42 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-[#FAFAFA] text-gray-900 selection:bg-gray-950 selection:text-white">
-      {/* Left Column: Editorial Brand Sidebar */}
-      <div className="lg:w-1/2 bg-gray-950 text-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden border-r border-gray-900">
-        {/* Subtle grid backdrop */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1F2937_1px,transparent_1px),linear-gradient(to_bottom,#1F2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 -z-10 pointer-events-none" />
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col justify-between selection:bg-neutral-900 selection:text-white px-4 py-8">
+      {/* Top Simple Nav */}
+      <header className="max-w-md w-full mx-auto flex items-center justify-between">
+        <Link to="/" className="flex items-center">
+          <GaHrmsLogo size="md" variant="light" productName="WORK-TIME" />
+        </Link>
+        <Link
+          to="/"
+          className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors"
+        >
+          ← Back to home
+        </Link>
+      </header>
 
-        {/* Top: Logo & Status */}
-        <div className="relative z-10 flex items-center justify-between">
-          <Link to="/" className="flex items-center group">
-            <GaHrmsLogo size="md" variant="dark" productName="WORK-TIME" />
-          </Link>
-
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Pune HQ • Online</span>
-          </div>
-        </div>
-
-        {/* Center: Hero Heading & Pillars */}
-        <div className="relative z-10 my-12 space-y-8 max-w-lg">
-          <div className="space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight text-white">
-              Autonomous workforce telemetry. Zero timesheets.
-            </h2>
-            <p className="text-sm text-gray-400 leading-relaxed font-normal">
-              Sign in with your corporate credentials to access live desktop presence, continuous activity timelines, and automated focus reports.
-            </p>
-          </div>
-
-          {/* Value points */}
-          <div className="space-y-3 pt-2">
-            {[
-              "Zero manual timesheets or stopwatch timers — captured automatically via desktop agent",
-              "Isolated timetrack_* database collections (zero collision with CRM business data)",
-              "Strict Privacy by Design (zero keylogging, zero media grabs, zero content inspection)",
-              "Automatic role routing: Admin → Super Admin • Head/Director/Manager → Manager • Staff → Employee",
-            ].map((text, i) => (
-              <div key={i} className="flex items-start gap-3 text-xs sm:text-sm text-gray-300">
-                <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                </div>
-                <span className="leading-snug">{text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom: Organization context */}
-        <div className="relative z-10 text-xs text-gray-500 flex items-center justify-between border-t border-gray-900 pt-6">
-          <span>Gryphon Technologies • Pune HQ</span>
-          <span className="font-mono text-[11px] text-gray-400">
-            Endpoint Telemetry Platform
-          </span>
-        </div>
-      </div>
-
-      {/* Right Column: Clean Sign In Card */}
-      <div className="lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 bg-[#FAFAFA]">
-        <div className="w-full max-w-md space-y-6 bg-white p-8 sm:p-10 rounded-2xl border border-gray-200/90 shadow-sm">
-          {/* Header */}
+      {/* Centered Sign In Card */}
+      <main className="w-full max-w-md mx-auto my-auto py-8">
+        <div className="bg-white border border-neutral-200 rounded-2xl p-8 sm:p-10 shadow-xs space-y-6">
           <div className="space-y-1.5 text-left">
-            <div className="lg:hidden pb-3">
-              <GaHrmsLogo size="md" variant="light" productName="WORK-TIME" />
-            </div>
-            <h3 className="text-2xl font-black text-gray-950 tracking-tight">
+            <h1 className="text-2xl font-bold text-neutral-950 tracking-tight">
               Sign in to Work-Time
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-500">
+            </h1>
+            <p className="text-sm text-neutral-500">
               Enter your corporate email and password.
             </p>
           </div>
 
           {/* Error Banner */}
           {(localError || authError) && (
-            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-xs text-rose-800 animate-shake">
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-xs text-rose-800">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div className="flex-1 font-medium">{localError || authError}</div>
             </div>
           )}
 
-          {/* Standard Form */}
-          <form onSubmit={handleFirebaseLogin} className="space-y-4 pt-1">
+          {/* Login Form */}
+          <form onSubmit={handleFirebaseLogin} className="space-y-4">
             <Input
               label="Corporate Email Address"
               type="email"
@@ -138,8 +83,8 @@ export function LoginPage() {
                 setLocalError(null);
                 clearAuthError();
               }}
-              placeholder="e.g. name@gryphonacademy.co.in"
-              leftIcon={<Mail className="w-4 h-4 text-gray-400" />}
+              placeholder="name@gryphonacademy.co.in"
+              leftIcon={<Mail className="w-4 h-4 text-neutral-400" />}
               autoComplete="username"
               required
             />
@@ -154,18 +99,18 @@ export function LoginPage() {
                 clearAuthError();
               }}
               placeholder="Enter your password"
-              leftIcon={<Lock className="w-4 h-4 text-gray-400" />}
+              leftIcon={<Lock className="w-4 h-4 text-neutral-400" />}
               autoComplete="current-password"
               required
             />
 
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center gap-2 cursor-pointer text-gray-600">
+              <label className="flex items-center gap-2 cursor-pointer text-neutral-600">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-gray-300 text-gray-950 focus:ring-gray-950/20 w-4 h-4 accent-gray-950"
+                  className="rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950/20 w-4 h-4 accent-neutral-950"
                 />
                 <span>Remember me on this PC</span>
               </label>
@@ -175,7 +120,7 @@ export function LoginPage() {
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full justify-center gap-2 text-sm font-semibold shadow-xs"
+              className="w-full justify-center gap-2 text-sm font-semibold bg-neutral-900 hover:bg-black text-white rounded-lg h-11"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -192,16 +137,24 @@ export function LoginPage() {
             </Button>
           </form>
 
-            {/* Corporate Security Footer */}
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
-              <span className="flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Encrypted Session • Work-Time Telemetry</span>
-              </span>
-              <span>Pune HQ</span>
-            </div>
+          {/* Direct link to download desktop app */}
+          <div className="pt-4 border-t border-neutral-100 text-center">
+            <a
+              href="/downloads/WorkPulse.exe"
+              download="WorkPulse.exe"
+              className="inline-flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-950 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5 text-neutral-500" />
+              <span>Need the desktop agent? Download WorkPulse (.exe)</span>
+            </a>
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Simple Footer */}
+      <footer className="max-w-md w-full mx-auto text-center text-xs text-neutral-400">
+        Gryphon Technologies • Pune HQ
+      </footer>
+    </div>
   );
 }
