@@ -9,6 +9,15 @@ using System.Windows.Forms;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Reflection;
+
+[assembly: AssemblyTitle("GA WORK-TIME Desktop Agent")]
+[assembly: AssemblyDescription("GA WORK-TIME Enterprise Workforce Activity Telemetry Agent")]
+[assembly: AssemblyCompany("Gryphon Academy Pvt. Ltd.")]
+[assembly: AssemblyProduct("GA WORK-TIME")]
+[assembly: AssemblyCopyright("Copyright © 2026 Gryphon Academy Pvt. Ltd.")]
+[assembly: AssemblyVersion("1.2.0.0")]
+[assembly: AssemblyFileVersion("1.2.0.0")]
 
 namespace GaWorkTime {
     public class Program {

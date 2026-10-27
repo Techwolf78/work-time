@@ -1,6 +1,6 @@
 import React from "react";
 import { Modal } from "../ui/Modal";
-import { Download, Laptop, Check, ShieldCheck, Clock } from "lucide-react";
+import { Download, Laptop, Check, ShieldCheck, Clock, AlertCircle, FileArchive } from "lucide-react";
 import { Button } from "../ui/Button";
 
 export interface DownloadAgentModalProps {
@@ -10,11 +10,21 @@ export interface DownloadAgentModalProps {
 
 export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps) {
   const downloadUrl = "/downloads/GA-Work-Time.exe";
+  const zipDownloadUrl = "/downloads/GA-Work-Time.zip";
 
   const handleDownload = () => {
     const link = document.createElement("a");
     link.href = downloadUrl;
     link.setAttribute("download", "GA-Work-Time.exe");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleZipDownload = () => {
+    const link = document.createElement("a");
+    link.href = zipDownloadUrl;
+    link.setAttribute("download", "GA-Work-Time.zip");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -41,23 +51,29 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
       }
       size="lg"
       footer={
-        <div className="flex items-center justify-between w-full">
+        <div className="flex items-center justify-between w-full flex-wrap gap-2">
           <span className="text-xs text-text-muted flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            Runs in user space • No administrative privileges required
+            Runs in user space • No admin privileges required
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={onClose} size="sm">
-              Cancel
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleZipDownload}
+              className="gap-1.5 text-xs text-gray-700"
+            >
+              <FileArchive className="w-3.5 h-3.5 text-gray-500" />
+              Download .ZIP (15 KB)
             </Button>
             <Button
               variant="primary"
               size="sm"
               onClick={handleDownload}
-              className="gap-1.5"
+              className="gap-1.5 text-xs"
             >
               <Download className="w-3.5 h-3.5" />
-              Download .exe (34 KB)
+              Download .EXE (36 KB)
             </Button>
           </div>
         </div>
@@ -131,6 +147,21 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
               <span className="font-medium text-text-primary">Privacy by Design</span>
             </div>
             <span className="text-[11px] text-text-muted">Only active application name and idle ticks</span>
+          </div>
+        </div>
+
+        {/* First-time Download / SmartScreen Guidance */}
+        <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-lg text-xs text-amber-950 flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-[11px] leading-relaxed">
+            <p className="font-semibold text-amber-950">Chrome or Windows SmartScreen Note:</p>
+            <p className="text-amber-900">
+              Because this is a freshly compiled corporate desktop client, Chrome may warn that the file is <em>"uncommonly downloaded"</em> and Windows may show <em>"Windows protected your PC"</em>.
+            </p>
+            <p className="text-amber-800">
+              • In Chrome: Click the download options menu → select <strong>"Keep"</strong> (or <strong>"Keep anyway"</strong>).<br />
+              • In Windows: Click <strong>"More info"</strong> → select <strong>"Run anyway"</strong>.
+            </p>
           </div>
         </div>
       </div>
