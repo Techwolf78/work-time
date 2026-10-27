@@ -11,6 +11,7 @@ import {
   ExternalLink,
   ChevronDown,
   Monitor,
+  Download,
 } from "lucide-react";
 import { useAuth } from "../../lib/authContext";
 import { useHrms } from "../../lib/hrmsContext";
@@ -19,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { GaHrmsLogo } from "../ui/GaHrmsLogo";
 import { PrivacyNoticeModal } from "../privacy/PrivacyNoticeModal";
+import { DownloadAgentModal } from "./DownloadAgentModal";
 
 export interface TopbarProps {
   onOpenMobileSidebar: () => void;
@@ -43,6 +45,7 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
@@ -126,6 +129,17 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
 
       {/* Right: Agent Status, Privacy, Quick Punch, Role Switcher, Notifications, User Menu */}
       <div className="flex items-center gap-2.5 shrink-0">
+        {/* Download WorkPulse Desktop App */}
+        <button
+          onClick={() => setShowDownloadModal(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition-all active:scale-95 cursor-pointer"
+          title="Download WorkPulse Desktop Agent for Windows (.exe)"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Download App</span>
+          <span className="sm:hidden">App</span>
+        </button>
+
         {/* Live Windows Endpoint Telemetry Badge */}
         <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-medium shadow-2xs">
           <span className="relative flex h-2 w-2">
@@ -388,6 +402,11 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
       <PrivacyNoticeModal
         isOpen={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
+      />
+
+      <DownloadAgentModal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
       />
     </header>
   );

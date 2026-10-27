@@ -16,6 +16,7 @@ import {
   Terminal,
   Play,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import { useAuth } from "../../lib/authContext";
 import { useHrms } from "../../lib/hrmsContext";
@@ -23,6 +24,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Ca
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { cn } from "../../lib/utils";
+import { DownloadAgentModal } from "../../components/layout/DownloadAgentModal";
 import {
   subscribeToTelemetryDevices,
   subscribeToDailySummaries,
@@ -61,6 +63,7 @@ export function DashboardPage() {
   const [todayLogs, setTodayLogs] = useState<ActivityIntervalRecord[]>([]);
   const [allSummaries, setAllSummaries] = useState<DailySummaryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   // Subscribe to Live Firestore Streams
   useEffect(() => {
@@ -359,29 +362,54 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Zero Devices Agent Launch Helper Banner */}
-      {devices.length === 0 && !isLoading && (
-        <Card className="p-5 border-dashed border-indigo-300 bg-indigo-50/50">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* WorkPulse Windows Desktop Agent Banner */}
+      <Card className="p-5 border border-indigo-200 bg-gradient-to-r from-indigo-50/70 via-white to-indigo-50/40 shadow-xs">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Laptop className="w-5 h-5" />
+            </div>
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-sm font-semibold text-gray-950">
-                  Ready to stream real-time desktop telemetry!
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-bold text-gray-950">
+                  WorkPulse for Windows (Desktop Agent)
                 </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  Zero Terminal • Native Win32
+                </span>
+                {onlineDevicesCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-800">
+                    {onlineDevicesCount} Active in Fleet
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-text-muted">
-                Run the WorkPulse native agent on your Windows workstation to immediately stream
-                active foreground windows and idle intervals into Firebase Firestore.
+              <p className="text-xs text-text-muted max-w-2xl leading-relaxed">
+                Autonomous background presence tracking for employees. No console commands or ugly terminal windows.
+                Docks silently into the Windows System Tray by your clock with one-click setup.
               </p>
             </div>
-            <div className="flex items-center gap-2 bg-gray-900 text-gray-100 font-mono text-xs px-3 py-2 rounded-lg shadow-sm border border-gray-800">
-              <span className="text-emerald-400">$</span>
-              <span>npm run agent</span>
-            </div>
           </div>
-        </Card>
-      )}
+
+          <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDownloadModal(true)}
+              className="text-xs text-gray-700 hover:text-gray-900 border-gray-300 w-full sm:w-auto"
+            >
+              Setup Guide
+            </Button>
+            <a
+              href="/downloads/WorkPulse.exe"
+              download="WorkPulse.exe"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-95 w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download (.exe)</span>
+            </a>
+          </div>
+        </div>
+      </Card>
 
       {/* Super Admin & Manager: Live Agent Activity Table */}
       {(isSuperAdmin || isManager) && (
@@ -597,6 +625,10 @@ export function DashboardPage() {
           </Card>
         </div>
       )}
+      <DownloadAgentModal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+      />
     </div>
   );
 }
