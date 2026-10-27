@@ -232,53 +232,37 @@ async function runTests() {
   assert(peopleGroup !== undefined, "Finds PEOPLE group on exact code");
   assert(peopleGroup?.items[0]?.title === "Aarav Sharma", "Exact match EMP-1001 returns Aarav Sharma first");
 
-  // TEST 2: Role-Based Access Control for Employees
-  const employeeSearchResult = await service.search({
-    query: "Personal work",
-    category: "LEAVE",
-    role: "EMPLOYEE",
-    employeeId: "emp-1", // Aarav
-  });
-  const leaveGroupEmp = employeeSearchResult.groups.find((g) => g.category === "LEAVE");
-  assert(
-    !leaveGroupEmp || leaveGroupEmp.items.length === 0,
-    "Employee (emp-1) cannot see Priya's leave request (emp-2)"
-  );
-
-  // TEST 3: Admin Can See Other Employee Leave Requests
-  const adminSearchResult = await service.search({
-    query: "Personal work",
-    category: "LEAVE",
+  // TEST 2: Category Filtering (Only ACTIVITY)
+  const actResult = await service.search({
+    query: "timeline",
+    category: "ACTIVITY",
     role: "SUPER_ADMIN",
   });
-  const leaveGroupAdmin = adminSearchResult.groups.find((g) => g.category === "LEAVE");
-  assert(
-    leaveGroupAdmin !== undefined && leaveGroupAdmin.items.length > 0,
-    "Super Admin can see all employee leave requests"
-  );
+  const actGroup = actResult.groups.find((g) => g.category === "ACTIVITY");
+  assert(actGroup !== undefined && actGroup.items.length > 0, "Finds ACTIVITY group on query timeline");
 
-  // TEST 4: Category Filtering (Only ATTENDANCE)
-  const attResult = await service.search({
-    query: "punch",
-    category: "ATTENDANCE",
+  // TEST 3: Category Filtering (Only DEVICES)
+  const devResult = await service.search({
+    query: "windows",
+    category: "DEVICES",
     role: "SUPER_ADMIN",
   });
-  const allNonAttGroups = attResult.groups.filter((g) => g.category !== "ATTENDANCE");
-  assert(allNonAttGroups.length === 0, "Category filter ATTENDANCE only returns attendance group");
+  const devGroup = devResult.groups.find((g) => g.category === "DEVICES");
+  assert(devGroup !== undefined && devGroup.items.length > 0, "Finds DEVICES group on query windows");
 
-  // TEST 5: Pages and Settings Navigation Search
+  // TEST 4: Pages and Settings Navigation Search
   const pageResult = await service.search({
-    query: "payroll",
+    query: "timeline",
     category: "PAGES",
     role: "SUPER_ADMIN",
   });
   const pageGroup = pageResult.groups.find((g) => g.category === "PAGES");
   assert(
-    pageGroup !== undefined && pageGroup.items.some((p) => p.path === "/payroll/dashboard"),
-    "Pages search indexes Payroll Dashboard"
+    pageGroup !== undefined && pageGroup.items.some((p) => p.path === "/time/timeline"),
+    "Pages search indexes 24-Hour Continuous Timeline"
   );
 
-  // TEST 6: Quick Actions Role Permissions
+  // TEST 5: Quick Actions Role Permissions
   const empActions = service.getQuickActions("EMPLOYEE", {
     onCloseSearch: () => {},
     navigate: () => {},
@@ -288,11 +272,11 @@ async function runTests() {
     navigate: () => {},
   });
 
-  const empHasAddEmployee = empActions.some((a) => a.id === "qa-add-employee");
-  const adminHasAddEmployee = adminActions.some((a) => a.id === "qa-add-employee");
+  const empHasFleet = empActions.some((a) => a.id === "qa-fleet-telemetry");
+  const adminHasFleet = adminActions.some((a) => a.id === "qa-fleet-telemetry");
 
-  assert(!empHasAddEmployee, "Employee cannot see 'Add Employee' quick action");
-  assert(adminHasAddEmployee, "Super Admin can see 'Add Employee' quick action");
+  assert(!empHasFleet, "Employee cannot see 'qa-fleet-telemetry' quick action");
+  assert(adminHasFleet, "Super Admin can see 'qa-fleet-telemetry' quick action");
 
   // TEST 7: AbortSignal Handling
   try {

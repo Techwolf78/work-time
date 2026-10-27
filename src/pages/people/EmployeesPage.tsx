@@ -77,7 +77,7 @@ export function EmployeesPage() {
           lastName,
           email: staff.email,
           avatar: "",
-          departmentName: staff.department || "Operations",
+          departmentName: staff.department?.trim() || "General",
           workstation: matchedDev ? matchedDev.hostname : "Awaiting Agent",
           os: matchedDev ? matchedDev.os : "Windows 10/11",
           agentStatus: matchedDev
@@ -106,7 +106,7 @@ export function EmployeesPage() {
       lastName: "",
       email: dev.employeeEmail,
       avatar: "",
-      departmentName: dev.department || "Operations",
+      departmentName: dev.department?.trim() || "General",
       workstation: dev.hostname,
       os: dev.os || "Windows 10/11",
       agentStatus: dev.online
@@ -121,15 +121,29 @@ export function EmployeesPage() {
     }));
   }, [crmStaff, devices]);
 
+  // Dynamically derive departments strictly from live Firestore CRM & workstation telemetry
+  const availableDepartments = useMemo(() => {
+    const set = new Set<string>();
+    employeesWithTelemetry.forEach((emp) => {
+      const dept = emp.departmentName?.trim();
+      if (dept) {
+        set.add(dept);
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [employeesWithTelemetry]);
+
   // Filtering
   const filteredList = useMemo(() => {
     return employeesWithTelemetry.filter((item) => {
-      // If Manager, filter to Engineering/their authorized team
-      if (isManager && item.departmentName !== "Engineering" && !item.firstName.includes("Ananya")) {
+      // If Manager, filter to their authorized department if configured
+      if (isManager && user?.department && item.departmentName.trim().toLowerCase() !== user.department.trim().toLowerCase()) {
         return false;
       }
 
-      if (selectedDept !== "ALL" && item.departmentName !== selectedDept) return false;
+      if (selectedDept !== "ALL" && item.departmentName.trim().toLowerCase() !== selectedDept.trim().toLowerCase()) {
+        return false;
+      }
       if (statusFilter !== "ALL" && item.agentStatus !== statusFilter) return false;
 
       if (searchQuery.trim()) {
@@ -143,7 +157,7 @@ export function EmployeesPage() {
       }
       return true;
     });
-  }, [employeesWithTelemetry, isManager, selectedDept, statusFilter, searchQuery]);
+  }, [employeesWithTelemetry, isManager, user?.department, selectedDept, statusFilter, searchQuery]);
 
   const activeCount = filteredList.filter((e) => e.agentStatus === "ACTIVE").length;
   const idleCount = filteredList.filter((e) => e.agentStatus === "IDLE").length;
@@ -216,11 +230,11 @@ export function EmployeesPage() {
                 className="bg-white border border-gray-200 text-xs rounded-lg px-2.5 py-1.5 text-gray-700 focus:outline-none shadow-2xs font-medium"
               >
                 <option value="ALL">All Departments</option>
-                <option value="Admin">Admin</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Sales">Sales</option>
-                <option value="Placement">Placement</option>
-                <option value="Operations">Operations</option>
+                {availableDepartments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
               </select>
             )}
 

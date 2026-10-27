@@ -3,19 +3,17 @@ import { UserRole } from "../../types/hrms";
 
 export type SearchCategory =
   | "ALL"
+  | "ACTIVITY"
+  | "DEVICES"
   | "PEOPLE"
-  | "ATTENDANCE"
-  | "LEAVE"
-  | "ORGANIZATION"
+  | "REPORTS"
   | "PAGES";
 
 export type ResultType =
   | "employee"
-  | "attendance"
-  | "regularization"
-  | "leave"
-  | "department"
-  | "branch"
+  | "activity"
+  | "device"
+  | "report"
   | "page"
   | "action";
 
@@ -70,10 +68,6 @@ export interface SearchResponse {
   executionTimeMs?: number;
 }
 
-/**
- * Pluggable Search Service contract for Spring Boot backend integration.
- * In production without backend, uses the in-memory context adapter.
- */
 export interface ISearchService {
   search(request: SearchRequest, signal?: AbortSignal): Promise<SearchResponse>;
   getQuickActions(role: UserRole, callbacks: SearchActionCallbacks): QuickActionItem[];
@@ -83,6 +77,8 @@ export interface SearchActionCallbacks {
   onOpenAddEmployee?: () => void;
   onOpenApplyLeave?: () => void;
   onOpenAttendanceCorrection?: () => void;
+  onOpenPrivacyCharter?: () => void;
+  onOpenDownloadAgent?: () => void;
   onCloseSearch: () => void;
   navigate: (path: string) => void;
 }

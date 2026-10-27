@@ -276,11 +276,11 @@ export function GlobalSearchModal({
   // Category filter tabs
   const categories: { id: SearchCategory; label: string }[] = [
     { id: "ALL", label: "All" },
-    { id: "PEOPLE", label: "People" },
-    { id: "ATTENDANCE", label: "Attendance" },
-    { id: "LEAVE", label: "Leave" },
-    { id: "ORGANIZATION", label: "Organization" },
-    { id: "PAGES", label: "Pages & Settings" },
+    { id: "ACTIVITY", label: "Time & Activity" },
+    { id: "DEVICES", label: "Workstations" },
+    { id: "PEOPLE", label: "Team" },
+    { id: "REPORTS", label: "Reports" },
+    { id: "PAGES", label: "Navigation" },
   ];
 
   const isIdle = !query.trim();

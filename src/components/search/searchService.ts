@@ -1,24 +1,19 @@
 import React from "react";
 import {
   Users,
-  Building2,
-  FileCheck,
-  Receipt,
-  FileText,
-  UserPlus,
-  CalendarPlus,
-  Clock,
-  ClockAlert,
-  WalletCards,
-  Layers,
+  Activity,
+  Monitor,
   Laptop,
-  Briefcase,
-  Target,
-  Shield,
-  Calendar,
+  FileSpreadsheet,
+  ClockAlert,
   Settings,
+  Download,
   ShieldCheck,
   Compass,
+  LayoutGrid,
+  FileText,
+  User,
+  Coffee,
 } from "lucide-react";
 import {
   ISearchService,
@@ -70,107 +65,102 @@ export class ClientSearchService implements ISearchService {
 
     const allActions: QuickActionItem[] = [
       {
-        id: "qa-add-employee",
-        title: "Add Employee",
-        subtitle: "Initiate multi-step onboarding for a new employee",
+        id: "qa-download-agent",
+        title: "Download Desktop Agent (.exe)",
+        subtitle: "Get GA-Work-Time.exe for Windows 10/11 background tracking",
         action: () => {
           callbacks.onCloseSearch();
-          if (callbacks.onOpenAddEmployee) {
-            callbacks.onOpenAddEmployee();
-          } else {
-            callbacks.navigate("/people/employees");
-          }
+          const a = document.createElement("a");
+          a.href = "/downloads/GA-Work-Time.exe";
+          a.download = "GA-Work-Time.exe";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
         },
-        icon: React.createElement(UserPlus, { className: "w-3.5 h-3.5 text-blue-600" }),
-        allowedRoles: ["SUPER_ADMIN", "HR_ADMIN"],
-      },
-      {
-        id: "qa-apply-leave",
-        title: "Apply for Leave",
-        subtitle: "Submit a new leave application with balance check",
-        action: () => {
-          callbacks.onCloseSearch();
-          if (callbacks.onOpenApplyLeave) {
-            callbacks.onOpenApplyLeave();
-          } else {
-            callbacks.navigate("/leave/overview");
-          }
-        },
-        icon: React.createElement(CalendarPlus, { className: "w-3.5 h-3.5 text-emerald-600" }),
+        icon: React.createElement(Download, { className: "w-3.5 h-3.5 text-blue-600" }),
         allowedRoles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"],
       },
       {
-        id: "qa-my-attendance",
-        title: "View My Attendance",
-        subtitle: "Check daily punches, working hours and normalization",
+        id: "qa-timeline",
+        title: "Open 24-Hour Timeline",
+        subtitle: "View continuous active focus band and application transitions",
         action: () => {
           callbacks.onCloseSearch();
-          callbacks.navigate("/time/attendance");
+          callbacks.navigate("/time/timeline");
         },
-        path: "/time/attendance",
-        icon: React.createElement(Clock, { className: "w-3.5 h-3.5 text-sky-600" }),
+        path: "/time/timeline",
+        icon: React.createElement(Activity, { className: "w-3.5 h-3.5 text-indigo-600" }),
         allowedRoles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"],
       },
       {
-        id: "qa-regularization",
-        title: "Request Attendance Correction",
-        subtitle: "Correct missed in/out punches or report discrepancies",
+        id: "qa-app-usage",
+        title: "Application Usage Analytics",
+        subtitle: "Analyze time spent across VS Code, Chrome, Slack, etc.",
         action: () => {
           callbacks.onCloseSearch();
-          if (callbacks.onOpenAttendanceCorrection) {
-            callbacks.onOpenAttendanceCorrection();
-          } else {
-            callbacks.navigate("/time/regularization");
-          }
+          callbacks.navigate("/time/apps");
         },
-        icon: React.createElement(ClockAlert, { className: "w-3.5 h-3.5 text-amber-600" }),
+        path: "/time/apps",
+        icon: React.createElement(Monitor, { className: "w-3.5 h-3.5 text-sky-600" }),
         allowedRoles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"],
       },
       {
-        id: "qa-review-approvals",
-        title: "Review Pending Approvals",
-        subtitle: "Process team leave requests and attendance corrections",
+        id: "qa-fleet-telemetry",
+        title: "Workstation Fleet Telemetry",
+        subtitle: "Monitor enrolled laptops, agent versions, and live heartbeats",
         action: () => {
           callbacks.onCloseSearch();
-          callbacks.navigate("/leave/requests");
+          callbacks.navigate("/dashboard");
         },
-        path: "/leave/requests",
-        icon: React.createElement(FileCheck, { className: "w-3.5 h-3.5 text-indigo-600" }),
+        path: "/dashboard",
+        icon: React.createElement(Laptop, { className: "w-3.5 h-3.5 text-purple-600" }),
         allowedRoles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER"],
       },
       {
-        id: "qa-payslips",
-        title: "Download Payslips",
-        subtitle: "View monthly payslips and compensation statements",
+        id: "qa-team-live",
+        title: "Team Live Presence",
+        subtitle: "Real-time active, idle, and focus status for all team members",
         action: () => {
           callbacks.onCloseSearch();
-          callbacks.navigate("/payroll/payslips");
+          callbacks.navigate("/time/live");
         },
-        path: "/payroll/payslips",
-        icon: React.createElement(WalletCards, { className: "w-3.5 h-3.5 text-teal-600" }),
+        path: "/time/live",
+        icon: React.createElement(Users, { className: "w-3.5 h-3.5 text-amber-600" }),
+        allowedRoles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER"],
+      },
+      {
+        id: "qa-reports",
+        title: "Detailed Time Reports",
+        subtitle: "Review daily summaries, focus scores, and export Excel reports",
+        action: () => {
+          callbacks.onCloseSearch();
+          callbacks.navigate("/reports");
+        },
+        path: "/reports",
+        icon: React.createElement(FileSpreadsheet, { className: "w-3.5 h-3.5 text-emerald-600" }),
         allowedRoles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"],
       },
       {
-        id: "qa-pay-run",
-        title: "Execute Pay Run",
-        subtitle: "Run statutory monthly payroll computation and bank batch",
+        id: "qa-inactivity",
+        title: "Review Inactivity Periods",
+        subtitle: "Inspect idle gaps (>5m) and employee break notes",
         action: () => {
           callbacks.onCloseSearch();
-          callbacks.navigate("/payroll/runs");
+          callbacks.navigate("/time/inactivity");
         },
-        path: "/payroll/runs",
-        icon: React.createElement(Receipt, { className: "w-3.5 h-3.5 text-emerald-600" }),
-        allowedRoles: ["SUPER_ADMIN", "HR_ADMIN"],
+        path: "/time/inactivity",
+        icon: React.createElement(Coffee, { className: "w-3.5 h-3.5 text-rose-600" }),
+        allowedRoles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER"],
       },
       {
-        id: "qa-settings",
-        title: "Open HRMS Settings",
-        subtitle: "Configure fiscal policies, working days, and statutory rates",
+        id: "qa-policies",
+        title: "Tracking Policies & Settings",
+        subtitle: "Configure idle thresholds (5m), pause rules & telemetry intervals",
         action: () => {
           callbacks.onCloseSearch();
-          callbacks.navigate("/admin/settings");
+          callbacks.navigate("/admin/tracking-policies");
         },
-        path: "/admin/settings",
+        path: "/admin/tracking-policies",
         icon: React.createElement(Settings, { className: "w-3.5 h-3.5 text-gray-600" }),
         allowedRoles: ["SUPER_ADMIN", "HR_ADMIN"],
       },
@@ -181,17 +171,13 @@ export class ClientSearchService implements ISearchService {
 
   public async search(request: SearchRequest, signal?: AbortSignal): Promise<SearchResponse> {
     const startTime = performance.now();
-    const { query, category = "ALL", role, employeeId } = request;
+    const { query, category = "ALL", role } = request;
     const cleanQuery = (query || "").toLowerCase().trim();
 
     if (signal?.aborted) {
       throw new DOMException("Aborted", "AbortError");
     }
 
-    // Role visibility flags
-    const isSuperOrHr = role === "SUPER_ADMIN" || role === "HR_ADMIN";
-    const isManager = role === "MANAGER";
-    const isEmployee = role === "EMPLOYEE";
     const canViewPeople = role !== "EMPLOYEE";
 
     const designationMap = new Map<string, string>();
@@ -201,13 +187,13 @@ export class ClientSearchService implements ISearchService {
     this.data.departments.forEach((d) => departmentMap.set(d.id, d.name));
 
     // Results buckets
+    const activityResults: SearchResultItem[] = [];
+    const deviceResults: SearchResultItem[] = [];
     const peopleResults: SearchResultItem[] = [];
-    const attendanceResults: SearchResultItem[] = [];
-    const leaveResults: SearchResultItem[] = [];
-    const orgResults: SearchResultItem[] = [];
+    const reportResults: SearchResultItem[] = [];
     const pageResults: SearchResultItem[] = [];
 
-    // 1. Search People (Employees)
+    // 1. Search People (Team Members)
     if (canViewPeople && (category === "ALL" || category === "PEOPLE")) {
       const matched = this.data.employees
         .filter((emp) => {
@@ -226,435 +212,296 @@ export class ClientSearchService implements ISearchService {
             dept.includes(cleanQuery)
           );
         })
-        .map((emp) => {
-          const desig = designationMap.get(emp.designationId) || "Staff";
-          const dept = departmentMap.get(emp.departmentId) || "General";
-          const isExact = (emp.employeeCode || "").toLowerCase() === cleanQuery;
+        .slice(0, 6);
 
-          return {
-            id: `emp-${emp.id}`,
-            type: "employee" as const,
-            category: "PEOPLE" as const,
-            title: `${emp.firstName} ${emp.lastName}`,
-            subtitle: `${emp.employeeCode} • ${desig} (${dept})`,
-            badge: emp.status,
-            badgeVariant: (emp.status === "ACTIVE"
-              ? "success"
-              : emp.status === "PROBATION"
-              ? "warning"
-              : "neutral") as "success" | "warning" | "neutral",
-            path: `/people/employees/${emp.id}`,
-            avatar: emp.avatar,
-            initials: `${emp.firstName?.[0] || ""}${emp.lastName?.[0] || ""}`,
-            score: isExact ? 100 : 50,
-          };
-        });
+      matched.forEach((emp) => {
+        const fullName = `${emp.firstName} ${emp.lastName}`;
+        const desig = designationMap.get(emp.designationId) || "Team Member";
+        const dept = departmentMap.get(emp.departmentId) || "Operations";
+        const initials = `${emp.firstName?.[0] || ""}${emp.lastName?.[0] || ""}`.toUpperCase();
 
-      peopleResults.push(...matched.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 8));
-    }
-
-    // 2. Search Attendance & Regularizations
-    if (category === "ALL" || category === "ATTENDANCE") {
-      // Regularization requests
-      const matchedRegs = this.data.regularizations
-        .filter((r) => {
-          if (!r) return false;
-          if (isEmployee && r.employeeId !== employeeId) return false;
-          const emp = this.data.employees.find((e) => e.id === r.employeeId);
-          const fullName = `${emp?.firstName || ""} ${emp?.lastName || ""}`.toLowerCase();
-          const code = (emp?.employeeCode || "").toLowerCase();
-          const reason = (r.reason || "").toLowerCase();
-          const date = (r.date || "").toLowerCase();
-          const type = (r.missingPunchType || "").toLowerCase();
-
-          return (
-            fullName.includes(cleanQuery) ||
-            code.includes(cleanQuery) ||
-            reason.includes(cleanQuery) ||
-            date.includes(cleanQuery) ||
-            type.includes(cleanQuery)
-          );
-        })
-        .map((r) => {
-          const emp = this.data.employees.find((e) => e.id === r.employeeId);
-          return {
-            id: `reg-${r.id}`,
-            type: "regularization" as const,
-            category: "ATTENDANCE" as const,
-            title: `${emp ? `${emp.firstName} ${emp.lastName}` : "Attendance Correction"} • ${r.missingPunchType} Punch`,
-            subtitle: `Date: ${r.date} @ ${r.requestedTime} • ${r.reason || "Missing punch regularization"}`,
-            badge: r.status,
-            badgeVariant: (r.status === "APPROVED"
-              ? "success"
-              : r.status === "REJECTED"
-              ? "danger"
-              : "warning") as "success" | "danger" | "warning",
-            path: "/time/regularization",
-            icon: React.createElement(ClockAlert, { className: "w-3.5 h-3.5 text-amber-600" }),
-          };
-        });
-
-      // Attendance records
-      const matchedAtt = this.data.attendance
-        .filter((a) => {
-          if (!a) return false;
-          if (isEmployee && a.employeeId !== employeeId) return false;
-          const emp = this.data.employees.find((e) => e.id === a.employeeId);
-          const name = `${emp?.firstName || ""} ${emp?.lastName || ""}`.toLowerCase();
-          const date = (a.date || "").toLowerCase();
-          const status = (a.status || "").toLowerCase();
-          return name.includes(cleanQuery) || date.includes(cleanQuery) || status.includes(cleanQuery);
-        })
-        .slice(0, 4)
-        .map((a) => {
-          const emp = this.data.employees.find((e) => e.id === a.employeeId);
-          return {
-            id: `att-${a.id}`,
-            type: "attendance" as const,
-            category: "ATTENDANCE" as const,
-            title: `${emp ? `${emp.firstName} ${emp.lastName}` : "Attendance Record"} • ${a.date}`,
-            subtitle: `Working Hours: ${a.workingHours}h • In: ${a.firstIn || "--:--"} • Out: ${a.lastOut || "--:--"}`,
-            badge: a.status,
-            badgeVariant: (a.status === "PRESENT"
-              ? "success"
-              : a.status === "LATE"
-              ? "warning"
-              : a.status === "ABSENT"
-              ? "danger"
-              : "neutral") as "success" | "warning" | "danger" | "neutral",
-            path: "/time/attendance",
-            icon: React.createElement(Clock, { className: "w-3.5 h-3.5 text-sky-600" }),
-          };
-        });
-
-      attendanceResults.push(...matchedRegs.slice(0, 4), ...matchedAtt);
-    }
-
-    // 3. Search Leave Requests & Policies
-    if (category === "ALL" || category === "LEAVE") {
-      const matchedLeaves = this.data.leaveRequests
-        .filter((l) => {
-          if (!l) return false;
-          if (isEmployee && l.employeeId !== employeeId) return false;
-          const emp = this.data.employees.find((e) => e.id === l.employeeId);
-          const name = `${emp?.firstName || ""} ${emp?.lastName || ""}`.toLowerCase();
-          const reason = (l.reason || "").toLowerCase();
-          const status = (l.status || "").toLowerCase();
-          const lType = this.data.leaveTypes.find((t) => t.id === l.leaveTypeId);
-          const typeName = (lType?.name || "").toLowerCase();
-
-          return (
-            name.includes(cleanQuery) ||
-            reason.includes(cleanQuery) ||
-            status.includes(cleanQuery) ||
-            typeName.includes(cleanQuery) ||
-            (l.fromDate || "").includes(cleanQuery)
-          );
-        })
-        .map((l) => {
-          const emp = this.data.employees.find((e) => e.id === l.employeeId);
-          const lType = this.data.leaveTypes.find((t) => t.id === l.leaveTypeId);
-          return {
-            id: `leave-${l.id}`,
-            type: "leave" as const,
-            category: "LEAVE" as const,
-            title: `${emp ? `${emp.firstName} ${emp.lastName}` : "Leave Request"} • ${lType?.name || "Leave"} (${l.days}d)`,
-            subtitle: `${l.fromDate} to ${l.toDate} • Reason: ${l.reason || "Not specified"}`,
-            badge: l.status,
-            badgeVariant: (l.status === "APPROVED"
-              ? "success"
-              : l.status === "REJECTED"
-              ? "danger"
-              : "warning") as "success" | "danger" | "warning",
-            path: isEmployee ? "/leave/overview" : "/leave/requests",
-            icon: React.createElement(CalendarPlus, { className: "w-3.5 h-3.5 text-emerald-600" }),
-          };
-        });
-
-      // Leave Types & Policies
-      const matchedPolicies = this.data.leaveTypes
-        .filter((t) => {
-          if (!t) return false;
-          return (
-            (t.name || "").toLowerCase().includes(cleanQuery) ||
-            (t.code || "").toLowerCase().includes(cleanQuery)
-          );
-        })
-        .map((t) => ({
-          id: `ltype-${t.id}`,
-          type: "leave" as const,
-          category: "LEAVE" as const,
-          title: `${t.name} (${t.code}) Policy`,
-          subtitle: `Annual Quota: ${t.annualQuota} days • Max Carry Forward: ${t.carryForwardMax} days`,
-          badge: `${t.annualQuota}d Quota`,
-          path: "/leave/policies",
-          icon: React.createElement(ShieldCheck, { className: "w-3.5 h-3.5 text-emerald-600" }),
-        }));
-
-      leaveResults.push(...matchedLeaves.slice(0, 6), ...matchedPolicies.slice(0, 2));
-    }
-
-    // 4. Search Organization (Departments, Branches)
-    if (isSuperOrHr && (category === "ALL" || category === "ORGANIZATION")) {
-      const matchedDepts = this.data.departments
-        .filter((d) => {
-          if (!d) return false;
-          return (
-            (d.name || "").toLowerCase().includes(cleanQuery) ||
-            (d.code || "").toLowerCase().includes(cleanQuery)
-          );
-        })
-        .map((d) => ({
-          id: `dept-${d.id}`,
-          type: "department" as const,
-          category: "ORGANIZATION" as const,
-          title: `${d.name} (${d.code})`,
-          subtitle: `Department • Cost Center • GA-HRMS Org Unit`,
-          badge: d.code,
-          path: "/people/departments",
-          icon: React.createElement(Building2, { className: "w-3.5 h-3.5 text-purple-600" }),
-        }));
-
-      const matchedBranches = this.data.branches
-        .filter((b) => {
-          if (!b) return false;
-          return (
-            (b.name || "").toLowerCase().includes(cleanQuery) ||
-            (b.city || "").toLowerCase().includes(cleanQuery) ||
-            (b.state || "").toLowerCase().includes(cleanQuery)
-          );
-        })
-        .map((b) => ({
-          id: `branch-${b.id}`,
-          type: "branch" as const,
-          category: "ORGANIZATION" as const,
-          title: `${b.name} Branch`,
-          subtitle: `Location: ${b.city}, ${b.state} • Operational Office`,
-          badge: b.city,
-          path: "/people/departments",
-          icon: React.createElement(Compass, { className: "w-3.5 h-3.5 text-indigo-600" }),
-        }));
-
-      orgResults.push(...matchedDepts.slice(0, 4), ...matchedBranches.slice(0, 3));
-    }
-
-    // 5. Search Pages & Settings
-    if (category === "ALL" || category === "PAGES") {
-      const pagesCatalog = [
-        {
-          title: "Employee Directory",
-          subtitle: "People > Employee Roster & Profiles",
-          keywords: "directory staff roster employees people team",
+        peopleResults.push({
+          id: `emp-${emp.id}`,
+          type: "employee",
+          category: "PEOPLE",
+          title: fullName,
+          subtitle: `${desig} • ${dept} (${emp.email})`,
+          badge: emp.status || "Active",
+          badgeVariant: emp.status === "ACTIVE" ? "success" : "neutral",
           path: "/people/employees",
-          roles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER"],
-          icon: Users,
+          initials,
+          avatar: emp.avatar,
+        });
+      });
+    }
+
+    // 2. Search Time & Activities (Applications & Timeline)
+    if (category === "ALL" || category === "ACTIVITY") {
+      const activityFeatures = [
+        {
+          id: "act-timeline",
+          title: "24-Hour Continuous Timeline",
+          subtitle: "Visual minute-by-minute focus band and active window stream",
+          keywords: "timeline activity focus hours active work band",
+          path: "/time/timeline",
+          badge: "Live Band",
         },
         {
-          title: "Organization Chart",
-          subtitle: "People > Visual Hierarchy & Reporting Lines",
-          keywords: "org hierarchy chart tree reporting structure",
-          path: "/people/org-chart",
-          roles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER"],
-          icon: Layers,
+          id: "act-apps",
+          title: "Application Usage Breakdown",
+          subtitle: "Inspect top foreground apps (Visual Studio Code, Chrome, Slack, etc.)",
+          keywords: "application apps software vs code chrome excel slack figma",
+          path: "/time/apps",
+          badge: "Analytics",
         },
         {
-          title: "Departments & Cost Centers",
-          subtitle: "People > Business Units & Headcounts",
-          keywords: "departments units business cost centers",
-          path: "/people/departments",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: Building2,
+          id: "act-inactivity",
+          title: "Inactivity & Break Review",
+          subtitle: "Review idle time (>5m), lunch pauses, and absence notes",
+          keywords: "idle break pause lunch inactivity gap absence",
+          path: "/time/inactivity",
+          badge: "Break Logs",
         },
         {
-          title: "Employee Documents",
-          subtitle: "People > Verified Documents & Policy Handbook",
-          keywords: "documents files kyc pan aadhaar certificates policies",
-          path: "/people/documents",
-          roles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER"],
-          icon: FileText,
-        },
-        {
-          title: "Attendance Register",
-          subtitle: "Time > Daily Check-Ins & Biometric Logs",
-          keywords: "attendance check in punch time clock late present",
-          path: "/time/attendance",
-          roles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"],
-          icon: Clock,
-        },
-        {
-          title: "Attendance Regularization",
-          subtitle: "Time > Missed Punch Approvals & Outdoor Duty",
-          keywords: "regularization missing punch correction outdoor duty",
-          path: "/time/regularization",
-          roles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"],
-          icon: ClockAlert,
-        },
-        {
-          title: "Shift Roster & Timings",
-          subtitle: "Time > Shift Allocations & Grace Periods",
-          keywords: "shifts roster schedule timings night morning",
-          path: "/time/shifts",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: Calendar,
-        },
-        {
-          title: "Leave Overview",
-          subtitle: "Leave > Organizational Leave Balances & Quota",
-          keywords: "leave time off balance quota annual sick casual",
-          path: "/leave/overview",
-          roles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"],
-          icon: CalendarPlus,
-        },
-        {
-          title: "Leave Requests & Approvals",
-          subtitle: "Leave > Pending Approvals & Signoffs",
-          keywords: "leave requests review approve reject manager",
-          path: "/leave/requests",
-          roles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER"],
-          icon: FileCheck,
-        },
-        {
-          title: "Leave Policies",
-          subtitle: "Leave > Statutory Rules & Accrual Config",
-          keywords: "leave policies statutory rules entitlement",
-          path: "/leave/policies",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: ShieldCheck,
-        },
-        {
-          title: "Payroll Control Center",
-          subtitle: "Payroll > Statutory Computations & EPF/ESIC",
-          keywords: "payroll salary compensation epf esic tax statutory",
-          path: "/payroll/dashboard",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: Receipt,
-        },
-        {
-          title: "All Payslips",
-          subtitle: "Payroll > Monthly Salary Statements & PDF Downloads",
-          keywords: "payslips salary slips compensation tax deduction",
-          path: "/payroll/payslips",
-          roles: ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"],
-          icon: WalletCards,
-        },
-        {
-          title: "Execute Pay Run",
-          subtitle: "Payroll > Salary Disbursement & Batch Statements",
-          keywords: "pay runs execute process monthly disbursement",
-          path: "/payroll/runs",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: Receipt,
-        },
-        {
-          title: "Recruitment (ATS)",
-          subtitle: "Talent > Job Openings & Candidate Pipeline",
-          keywords: "recruitment jobs candidates hiring ats applicant interview",
-          path: "/recruitment",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: Briefcase,
-        },
-        {
-          title: "IT Assets Management",
-          subtitle: "Assets > Hardware Laptops & Inventory Logs",
-          keywords: "assets laptops it hardware macbook equipment inventory",
-          path: "/assets",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: Laptop,
-        },
-        {
-          title: "Performance & OKRs",
-          subtitle: "PMS > Quarterly OKRs & 360 Appraisals",
-          keywords: "performance okrs goals appraisal kpi reviews rating",
-          path: "/performance",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: Target,
-        },
-        {
-          title: "Security & Audit Logs",
-          subtitle: "Settings > Compliance & Timestamped Actions",
-          keywords: "audit logs security compliance events admin",
-          path: "/admin/audit-logs",
-          roles: ["SUPER_ADMIN"],
-          icon: Shield,
-        },
-        {
-          title: "Company Settings",
-          subtitle: "Settings > Working Days & Organization Profile",
-          keywords: "settings configuration company working days parameters",
-          path: "/admin/settings",
-          roles: ["SUPER_ADMIN", "HR_ADMIN"],
-          icon: Settings,
+          id: "act-live",
+          title: "Team Live Presence",
+          subtitle: "Real-time active work status of all online employees",
+          keywords: "live presence online team members real-time current",
+          path: "/time/live",
+          badge: "Live Telemetry",
         },
       ];
 
-      const matchedPages = pagesCatalog
-        .filter((p) => {
-          if (!p.roles.includes(role)) return false;
+      activityFeatures
+        .filter((item) => {
           return (
-            p.title.toLowerCase().includes(cleanQuery) ||
-            p.subtitle.toLowerCase().includes(cleanQuery) ||
-            p.keywords.toLowerCase().includes(cleanQuery)
+            item.title.toLowerCase().includes(cleanQuery) ||
+            item.subtitle.toLowerCase().includes(cleanQuery) ||
+            item.keywords.toLowerCase().includes(cleanQuery)
           );
         })
-        .map((p) => ({
-          id: `page-${p.path}`,
-          type: "page" as const,
-          category: "PAGES" as const,
-          title: p.title,
-          subtitle: p.subtitle,
-          badge: "Page",
-          path: p.path,
-          icon: React.createElement(p.icon, { className: "w-3.5 h-3.5 text-gray-500" }),
-        }));
-
-      pageResults.push(...matchedPages.slice(0, 6));
+        .forEach((item) => {
+          activityResults.push({
+            id: item.id,
+            type: "activity",
+            category: "ACTIVITY",
+            title: item.title,
+            subtitle: item.subtitle,
+            badge: item.badge,
+            badgeVariant: "primary",
+            path: item.path,
+            icon: React.createElement(Activity, { className: "w-4 h-4 text-indigo-600" }),
+          });
+        });
     }
 
-    // Build Category Groups
+    // 3. Search Workstations & Devices
+    if (category === "ALL" || category === "DEVICES") {
+      const deviceEntries = [
+        {
+          id: "dev-ajay",
+          title: "AJAY (Windows 10/11)",
+          subtitle: "Active Workstation Agent v1.2.0 • nishadk@gryphonacademy.co.in",
+          keywords: "ajay windows laptop workstation laptop-01 agent pc",
+          path: "/dashboard",
+          badge: "Active",
+        },
+        {
+          id: "dev-download",
+          title: "GA-Work-Time.exe",
+          subtitle: "Download official Windows background client (34 KB standalone)",
+          keywords: "download exe agent installer client setup file",
+          path: "/downloads/GA-Work-Time.exe",
+          badge: "v1.2.0",
+        },
+        {
+          id: "dev-inventory",
+          title: "Workstation Fleet Inventory",
+          subtitle: "Enrolled laptops, OS builds, heartbeats, and queue health",
+          keywords: "workstations fleet inventory machines devices health",
+          path: "/devices",
+          badge: "Fleet View",
+        },
+      ];
+
+      deviceEntries
+        .filter((item) => {
+          return (
+            item.title.toLowerCase().includes(cleanQuery) ||
+            item.subtitle.toLowerCase().includes(cleanQuery) ||
+            item.keywords.toLowerCase().includes(cleanQuery)
+          );
+        })
+        .forEach((item) => {
+          deviceResults.push({
+            id: item.id,
+            type: "device",
+            category: "DEVICES",
+            title: item.title,
+            subtitle: item.subtitle,
+            badge: item.badge,
+            badgeVariant: "info",
+            path: item.path,
+            icon: React.createElement(Laptop, { className: "w-4 h-4 text-purple-600" }),
+          });
+        });
+    }
+
+    // 4. Search Reports & Exports
+    if (category === "ALL" || category === "REPORTS") {
+      const reportItems = [
+        {
+          id: "rep-detailed",
+          title: "Detailed Work Reports",
+          subtitle: "Daily total tracked hours, active seconds, and focus ratios",
+          keywords: "reports export excel csv daily summary focus time",
+          path: "/reports",
+          badge: "Export",
+        },
+        {
+          id: "rep-privacy",
+          title: "Privacy by Design Charter",
+          subtitle: "Strict endpoint privacy: zero keylogging, zero screen recording",
+          keywords: "privacy charter policy keylog recording transparency",
+          path: "/dashboard",
+          badge: "Charter",
+        },
+      ];
+
+      reportItems
+        .filter((item) => {
+          return (
+            item.title.toLowerCase().includes(cleanQuery) ||
+            item.subtitle.toLowerCase().includes(cleanQuery) ||
+            item.keywords.toLowerCase().includes(cleanQuery)
+          );
+        })
+        .forEach((item) => {
+          reportResults.push({
+            id: item.id,
+            type: "report",
+            category: "REPORTS",
+            title: item.title,
+            subtitle: item.subtitle,
+            badge: item.badge,
+            badgeVariant: "success",
+            path: item.path,
+            icon: React.createElement(FileSpreadsheet, { className: "w-4 h-4 text-emerald-600" }),
+          });
+        });
+    }
+
+    // 5. Search Navigation Pages & Settings
+    if (category === "ALL" || category === "PAGES") {
+      const navPages = [
+        {
+          title: "Overview Dashboard",
+          subtitle: "Platform > Organization Overview & Live Telemetry",
+          keywords: "dashboard home overview fleet stats today",
+          path: "/dashboard",
+          icon: Compass,
+        },
+        {
+          title: "24-Hour Continuous Timeline",
+          subtitle: "Time Tracking > Minute-by-Minute Focus Band",
+          keywords: "timeline activity focus hours active work band",
+          path: "/time/timeline",
+          icon: Activity,
+        },
+        {
+          title: "Application Usage Breakdown",
+          subtitle: "Time Tracking > Foreground Application Analytics",
+          keywords: "applications apps software vs code chrome excel slack",
+          path: "/time/apps",
+          icon: Monitor,
+        },
+        {
+          title: "Team Live Presence",
+          subtitle: "Time Tracking > Live Member Activity Stream",
+          keywords: "team live presence members staff online",
+          path: "/time/live",
+          icon: Users,
+        },
+        {
+          title: "Inactivity & Break Review",
+          subtitle: "Time Tracking > Idle Review & Absence Notes",
+          keywords: "inactivity idle breaks lunch absence notes",
+          path: "/time/inactivity",
+          icon: Coffee,
+        },
+        {
+          title: "Detailed Reports & Exports",
+          subtitle: "Reports > Daily Summaries & Excel Exports",
+          keywords: "reports export excel csv analytics summaries",
+          path: "/reports",
+          icon: FileSpreadsheet,
+        },
+        {
+          title: "Workstation Fleet & Devices",
+          subtitle: "Devices > Enrolled Laptops & Agent Health",
+          keywords: "devices workstations fleet health laptops agent",
+          path: "/devices",
+          icon: Laptop,
+        },
+        {
+          title: "Tracking Policies & Rules",
+          subtitle: "Settings > Idle Thresholds & Telemetry Cadence",
+          keywords: "settings policies tracking idle thresholds pause rules",
+          path: "/admin/tracking-policies",
+          icon: Settings,
+        },
+        {
+          title: "People Directory",
+          subtitle: "Organization > Employee Directory & Roles",
+          keywords: "people employees team staff members directory",
+          path: "/people/employees",
+          icon: Users,
+        },
+      ];
+
+      navPages
+        .filter((page) => {
+          return (
+            page.title.toLowerCase().includes(cleanQuery) ||
+            page.subtitle.toLowerCase().includes(cleanQuery) ||
+            page.keywords.toLowerCase().includes(cleanQuery)
+          );
+        })
+        .forEach((page) => {
+          pageResults.push({
+            id: `page-${page.path}`,
+            type: "page",
+            category: "PAGES",
+            title: page.title,
+            subtitle: page.subtitle,
+            badge: "Page",
+            badgeVariant: "neutral",
+            path: page.path,
+            icon: React.createElement(page.icon, { className: "w-4 h-4 text-gray-500" }),
+          });
+        });
+    }
+
     const groups: SearchCategoryGroup[] = [];
 
-    if (pageResults.length > 0) {
-      groups.push({
-        category: "PAGES",
-        label: "Pages & Settings",
-        items: pageResults,
-      });
+    if (activityResults.length > 0) {
+      groups.push({ category: "ACTIVITY", label: "Time & Activity", items: activityResults });
     }
-
+    if (deviceResults.length > 0) {
+      groups.push({ category: "DEVICES", label: "Workstations & Agent", items: deviceResults });
+    }
     if (peopleResults.length > 0) {
-      groups.push({
-        category: "PEOPLE",
-        label: "People & Directory",
-        items: peopleResults,
-      });
+      groups.push({ category: "PEOPLE", label: "Team Members", items: peopleResults });
+    }
+    if (reportResults.length > 0) {
+      groups.push({ category: "REPORTS", label: "Reports & Policies", items: reportResults });
+    }
+    if (pageResults.length > 0) {
+      groups.push({ category: "PAGES", label: "Navigation & Pages", items: pageResults });
     }
 
-    if (attendanceResults.length > 0) {
-      groups.push({
-        category: "ATTENDANCE",
-        label: "Attendance & Punches",
-        items: attendanceResults,
-      });
-    }
-
-    if (leaveResults.length > 0) {
-      groups.push({
-        category: "LEAVE",
-        label: "Leaves & Policies",
-        items: leaveResults,
-      });
-    }
-
-    if (orgResults.length > 0) {
-      groups.push({
-        category: "ORGANIZATION",
-        label: "Organization & Units",
-        items: orgResults,
-      });
-    }
-
-    const totalResults = groups.reduce((sum, g) => sum + g.items.length, 0);
-    const executionTimeMs = Math.round(performance.now() - startTime);
+    const totalResults = groups.reduce((acc, g) => acc + g.items.length, 0);
+    const executionTimeMs = performance.now() - startTime;
 
     return {
       query,
