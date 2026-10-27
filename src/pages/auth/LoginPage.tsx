@@ -9,10 +9,9 @@ import {
   Building,
   User,
   AlertCircle,
-  Database,
 } from "lucide-react";
 import { useAuth, DEMO_USERS } from "../../lib/authContext";
-import { activeEnv, setFirebaseEnv, firebaseConfig } from "../../lib/firebase";
+import { activeEnv, firebaseConfig } from "../../lib/firebase";
 import { UserRole } from "../../types/hrms";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
@@ -61,12 +60,12 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-[#FAFAFA] text-gray-900 selection:bg-gray-950 selection:text-white">
-      {/* Left Column: Dark Editorial Brand Sidebar */}
+      {/* Left Column: Editorial Brand Sidebar */}
       <div className="lg:w-1/2 bg-gray-950 text-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden border-r border-gray-900">
         {/* Subtle grid backdrop */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1F2937_1px,transparent_1px),linear-gradient(to_bottom,#1F2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 -z-10 pointer-events-none" />
 
-        {/* Top: Logo & System Classification */}
+        {/* Top: Logo & Status */}
         <div className="relative z-10 flex items-center justify-between">
           <Link to="/" className="flex items-center group">
             <GaHrmsLogo size="md" variant="dark" productName="WORK-TIME" />
@@ -74,7 +73,7 @@ export function LoginPage() {
 
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>{activeEnv === "dev" ? "Dev DB: authencation-39485" : "Prod DB: gryphon-sync"}</span>
+            <span>Pune HQ • Online</span>
           </div>
         </div>
 
@@ -92,8 +91,8 @@ export function LoginPage() {
           {/* Value points */}
           <div className="space-y-3 pt-2">
             {[
-              `Connected to ${firebaseConfig.projectId} (${activeEnv === "dev" ? "Developer Testing DB" : "Production Paid DB"})`,
-              "Isolated timetrack_* database collections (zero collision with CRM data)",
+              "Zero manual timesheets or stopwatch timers — captured automatically via desktop agent",
+              "Isolated timetrack_* database collections (zero collision with CRM business data)",
               "Strict Privacy by Design (zero keylogging, zero media grabs, zero content inspection)",
               "Automatic role routing: Admin → Super Admin • Head/Director/Manager → Manager • Staff → Employee",
             ].map((text, i) => (
@@ -111,12 +110,12 @@ export function LoginPage() {
         <div className="relative z-10 text-xs text-gray-500 flex items-center justify-between border-t border-gray-900 pt-6">
           <span>Gryphon Technologies • Pune HQ</span>
           <span className="font-mono text-[11px] text-gray-400">
-            Active Project: {firebaseConfig.projectId}
+            Endpoint Telemetry Platform
           </span>
         </div>
       </div>
 
-      {/* Right Column: Sign In Card */}
+      {/* Right Column: Clean Sign In Card */}
       <div className="lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 bg-[#FAFAFA]">
         <div className="w-full max-w-md space-y-6 bg-white p-8 sm:p-10 rounded-2xl border border-gray-200/90 shadow-sm">
           {/* Header */}
@@ -128,42 +127,8 @@ export function LoginPage() {
               Sign in to Work-Time
             </h3>
             <p className="text-xs sm:text-sm text-gray-500">
-              Enter your corporate email and password from Gryphon CRM.
+              Enter your corporate email and password.
             </p>
-          </div>
-
-          {/* Database Switcher: Developer Testing DB vs Production DB */}
-          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-gray-700 font-medium">
-              <Database className="w-3.5 h-3.5 text-gray-500" />
-              <span>Target Database:</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setFirebaseEnv("dev")}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
-                  activeEnv === "dev"
-                    ? "bg-gray-950 text-white shadow-xs"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/70"
-                }`}
-                title="Testing DB: authencation-39485"
-              >
-                Dev (39485)
-              </button>
-              <button
-                type="button"
-                onClick={() => setFirebaseEnv("prod")}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
-                  activeEnv === "prod"
-                    ? "bg-indigo-600 text-white shadow-xs"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/70"
-                }`}
-                title="Production Paid DB: gryphon-sync"
-              >
-                Prod (Gryphon)
-              </button>
-            </div>
           </div>
 
           {/* Error Banner */}
@@ -185,7 +150,7 @@ export function LoginPage() {
                 setLocalError(null);
                 clearAuthError();
               }}
-              placeholder="e.g. name@gryphon.io or your CRM email"
+              placeholder="e.g. name@gryphonacademy.co.in"
               leftIcon={<Mail className="w-4 h-4 text-gray-400" />}
               autoComplete="username"
               required
@@ -200,7 +165,7 @@ export function LoginPage() {
                 setLocalError(null);
                 clearAuthError();
               }}
-              placeholder="Enter your CRM password"
+              placeholder="Enter your password"
               leftIcon={<Lock className="w-4 h-4 text-gray-400" />}
               autoComplete="current-password"
               required
@@ -216,10 +181,6 @@ export function LoginPage() {
                 />
                 <span>Remember me on this PC</span>
               </label>
-
-              <span className="text-[11px] text-text-muted">
-                {activeEnv === "dev" ? "authencation-39485" : "gryphon-sync"}
-              </span>
             </div>
 
             <Button
@@ -232,13 +193,11 @@ export function LoginPage() {
               {isSubmitting ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Authenticating against {firebaseConfig.projectId}...</span>
+                  <span>Signing in...</span>
                 </>
               ) : (
                 <>
-                  <span>
-                    Sign In ({activeEnv === "dev" ? "Dev DB" : "Prod DB"})
-                  </span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
