@@ -34,19 +34,32 @@ export const prodFirebaseConfig = {
 };
 
 /**
- * Determine active environment automatically:
- * - Localhost / 127.0.0.1 -> 'dev' (Developer testing DB: authencation-39485)
- * - Production domains / deployed hosts -> 'prod' (Gryphon CRM Paid DB: gryphon-sync)
+ * Determine active environment:
+ * Default to 'dev' (Developer testing DB: authencation-39485) by default everywhere (localhost & Vercel)
+ * so developers testing the live Vercel app and downloaded desktop agent (WorkPulse.exe)
+ * stream to the exact same test database and see each other's live records safely without touching prod.
+ *
+ * To toggle to 'prod' (gryphon-sync):
+ * Set VITE_FIREBASE_ENV=prod at build/deploy time or localStorage.setItem("ga_firebase_env", "prod").
  */
 export const getActiveFirebaseEnv = (): FirebaseEnv => {
   if (typeof window === "undefined") return "dev";
-  const hostname = window.location.hostname || "";
-  const isLocal =
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "::1" ||
-    hostname.endsWith(".local");
-  return isLocal ? "dev" : "prod";
+
+  // Check localStorage override if manually set
+  try {
+    const saved = localStorage.getItem("ga_firebase_env");
+    if (saved === "prod" || saved === "dev") return saved;
+  } catch { }
+
+  // Check explicit environment variable (e.g. VITE_FIREBASE_ENV=prod)
+  try {
+    if ((import.meta as any).env?.VITE_FIREBASE_ENV === "prod") {
+      return "prod";
+    }
+  } catch { }
+
+  // Default to dev (authencation-39485) for safe multi-developer testing
+  return "dev";
 };
 
 export const activeEnv = getActiveFirebaseEnv();
