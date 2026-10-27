@@ -1,15 +1,18 @@
 /**
  * GA-Work-Time (WorkPulse) Native Desktop Telemetry Agent
  * 
- * Runs as a background probe daemon on Windows workstations, sampling Win32
- * foreground window titles, active process executables, and physical keyboard/mouse
- * idle time via P/Invoke APIs, streaming structured telemetry to Firestore.
+ * Features One-Time Workstation Onboarding:
+ * On Day 1, prompts for corporate email once, verifies against CRM users,
+ * and permanently saves identity to %APPDATA%/WorkPulse/agent_config.json.
+ * On every subsequent day/boot, starts instantly with ZERO manual login.
  */
 
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import readline from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
 import os from "node:os";
 
 import { initializeApp } from "firebase/app";
@@ -17,7 +20,6 @@ import {
   getFirestore,
   doc,
   setDoc,
-  getDoc,
   collection,
   getDocs,
   query,
@@ -50,52 +52,82 @@ const FIREBASE_CONFIGS = {
   },
 };
 
-// Default Configuration File
-const CONFIG_PATH = resolve(__dirname, "config.json");
+// Global AppData Directory for Windows Persistence
+const APPDATA_DIR = process.env.APPDATA
+  ? resolve(process.env.APPDATA, "WorkPulse")
+  : resolve(__dirname, ".workpulse");
+const APPDATA_CONFIG_PATH = resolve(APPDATA_DIR, "agent_config.json");
+const LOCAL_CONFIG_PATH = resolve(__dirname, "config.json");
 
-function loadConfig() {
-  const defaults = {
-    env: "dev",
-    email: "ajay@gryphonacademy.co.in",
-    password: "",
-    sampleCadenceSeconds: 5,
-    flushCadenceSeconds: 30,
-    deviceId: os.hostname(),
-  };
-
-  if (existsSync(CONFIG_PATH)) {
+function ensureDirectory(dir) {
+  if (!existsSync(dir)) {
     try {
-      const parsed = JSON.parse(readFileSync(CONFIG_PATH, "utf-8"));
-      return { ...defaults, ...parsed };
-    } catch (e) {
-      console.warn("Could not read config.json, using defaults.");
-    }
-  } else {
-    try {
-      writeFileSync(CONFIG_PATH, JSON.stringify(defaults, null, 2), "utf-8");
+      mkdirSync(dir, { recursive: true });
     } catch (e) {}
   }
-  return defaults;
+}
+
+// Load existing config from AppData or Local
+function loadSavedConfig() {
+  if (existsSync(APPDATA_CONFIG_PATH)) {
+    try {
+      return JSON.parse(readFileSync(APPDATA_CONFIG_PATH, "utf-8"));
+    } catch (e) {}
+  }
+  if (existsSync(LOCAL_CONFIG_PATH)) {
+    try {
+      return JSON.parse(readFileSync(LOCAL_CONFIG_PATH, "utf-8"));
+    } catch (e) {}
+  }
+  return null;
+}
+
+function saveConfig(cfg) {
+  ensureDirectory(APPDATA_DIR);
+  try {
+    writeFileSync(APPDATA_CONFIG_PATH, JSON.stringify(cfg, null, 2), "utf-8");
+  } catch (e) {}
+  try {
+    writeFileSync(LOCAL_CONFIG_PATH, JSON.stringify(cfg, null, 2), "utf-8");
+  } catch (e) {}
 }
 
 // Parse Command Line Flags
-function parseArgs(defaults) {
+function parseArgs() {
   const args = process.argv.slice(2);
-  const config = { ...defaults };
+  const flags = {
+    reset: false,
+  };
 
   for (const arg of args) {
-    if (arg.startsWith("--env=")) config.env = arg.split("=")[1].trim();
-    if (arg.startsWith("--email=")) config.email = arg.split("=")[1].trim();
-    if (arg.startsWith("--password=")) config.password = arg.split("=")[1].trim();
-    if (arg.startsWith("--cadence=")) config.sampleCadenceSeconds = parseInt(arg.split("=")[1].trim(), 10) || 5;
-    if (arg.startsWith("--flush=")) config.flushCadenceSeconds = parseInt(arg.split("=")[1].trim(), 10) || 30;
+    if (arg === "--reset" || arg === "-r") flags.reset = true;
+    if (arg.startsWith("--env=")) flags.env = arg.split("=")[1].trim();
+    if (arg.startsWith("--email=")) flags.email = arg.split("=")[1].trim();
+    if (arg.startsWith("--password=")) flags.password = arg.split("=")[1].trim();
+    if (arg.startsWith("--cadence=")) flags.sampleCadenceSeconds = parseInt(arg.split("=")[1].trim(), 10) || 5;
+    if (arg.startsWith("--flush=")) flags.flushCadenceSeconds = parseInt(arg.split("=")[1].trim(), 10) || 30;
   }
-  return config;
+  return flags;
 }
 
-const config = parseArgs(loadConfig());
-const fbConfig = FIREBASE_CONFIGS[config.env] || FIREBASE_CONFIGS.dev;
+const flags = parseArgs();
+let saved = loadSavedConfig();
 
+// If --reset is passed, disregard saved configuration
+if (flags.reset) {
+  saved = null;
+}
+
+let config = {
+  env: flags.env || saved?.env || "dev",
+  email: flags.email || saved?.email || "",
+  password: flags.password || saved?.password || "",
+  sampleCadenceSeconds: flags.sampleCadenceSeconds || saved?.sampleCadenceSeconds || 5,
+  flushCadenceSeconds: flags.flushCadenceSeconds || saved?.flushCadenceSeconds || 30,
+  deviceId: os.hostname(),
+};
+
+const fbConfig = FIREBASE_CONFIGS[config.env] || FIREBASE_CONFIGS.dev;
 const app = initializeApp(fbConfig, "desktop-telemetry-agent");
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -103,9 +135,9 @@ const auth = getAuth(app);
 // State tracking
 let currentEmployee = {
   id: "EMP-1001",
-  name: "Ajay Pawar",
+  name: "Employee",
   email: config.email,
-  department: "Engineering",
+  department: "Operations",
 };
 
 let activeInterval = null;
@@ -143,9 +175,45 @@ function formatDuration(seconds) {
   return `${h}h ${remM}m`;
 }
 
+// 1-Time First-Run Onboarding Setup Prompt
+async function performFirstTimeSetup() {
+  console.clear();
+  console.log(`
+\x1b[35m╔══════════════════════════════════════════════════════════════════════╗
+║        ⚡ GA-WORK-TIME (WORKPULSE) WORKSTATION SETUP                 ║
+║                   One-Time Workstation Identity Pairing              ║
+╚══════════════════════════════════════════════════════════════════════╝\x1b[0m
+
+\x1b[1mWorkstation Detected\x1b[0m : \x1b[36m${os.hostname()}\x1b[0m (Windows User: \x1b[33m${os.userInfo().username}\x1b[0m)
+\x1b[1mDatabase Target\x1b[0m      : \x1b[32m${config.env.toUpperCase()} (${fbConfig.projectId})\x1b[0m
+
+This workstation has not been paired to an employee account yet.
+Please enter your corporate CRM email address.
+\x1b[90m(Note: You only need to do this ONCE. Subsequent runs start automatically.)\x1b[0m
+`);
+
+  const rl = readline.createInterface({ input, output });
+
+  while (!config.email) {
+    const answer = await rl.question("\x1b[1;36m➤ Enter Corporate CRM Email:\x1b[0m ");
+    const trimmed = answer.trim().toLowerCase();
+    if (trimmed && trimmed.includes("@")) {
+      config.email = trimmed;
+    } else {
+      console.log("\x1b[31mPlease enter a valid email address.\x1b[0m");
+    }
+  }
+
+  rl.close();
+
+  // Save to disk permanently
+  saveConfig(config);
+  console.log(`\n\x1b[32m✔ Configuration saved to:\x1b[0m ${APPDATA_CONFIG_PATH}`);
+}
+
 // Resolve user profile from CRM
 async function resolveUserProfile() {
-  console.log(`\x1b[36m[Agent Init]\x1b[0m Resolving CRM profile for ${config.email}...`);
+  console.log(`\x1b[36m[Agent Init]\x1b[0m Verifying employee profile for \x1b[1m${config.email}\x1b[0m...`);
 
   // If password provided, sign in with Firebase Auth
   if (config.password) {
@@ -174,7 +242,7 @@ async function resolveUserProfile() {
         role: data.role || "Executive",
       };
       console.log(
-        `\x1b[32m[Profile Found]\x1b[0m ${currentEmployee.name} (${currentEmployee.department}) | Role: ${currentEmployee.role}`
+        `\x1b[32m[Profile Verified]\x1b[0m ${currentEmployee.name} (${currentEmployee.department}) | Role: ${currentEmployee.role}`
       );
       return;
     }
@@ -182,7 +250,15 @@ async function resolveUserProfile() {
     console.warn(`\x1b[33m[Profile]\x1b[0m Could not query users collection: ${err.message}`);
   }
 
-  console.log(`\x1b[33m[Profile Default]\x1b[0m Using default employee profile for ${config.email}`);
+  // Default fallback if doc is missing in CRM
+  currentEmployee = {
+    id: config.email,
+    name: config.email.split("@")[0],
+    email: config.email,
+    department: "Operations",
+    role: "Staff",
+  };
+  console.log(`\x1b[33m[Profile]\x1b[0m Using workstation profile for ${config.email}`);
 }
 
 // Execute Win32 probe script
@@ -216,7 +292,6 @@ function runProbe() {
           return;
         } catch (e) {}
       }
-      // Fallback
       resolvePromise({
         windowTitle: "",
         processName: "System",
@@ -308,7 +383,6 @@ async function flushInterval(interval) {
     console.error(`\x1b[31m[Flush Log Error]\x1b[0m ${err.message}`);
   }
 
-  // Update Daily Summary
   await updateDailySummary(dateStr);
 }
 
@@ -317,7 +391,6 @@ async function updateDailySummary(dateStr) {
   const summaryId = `${currentEmployee.id}_${dateStr}`;
   const summaryRef = doc(db, "timetrack_daily_summaries", summaryId);
 
-  // Determine top application
   let topApp = "Workstation";
   let maxSec = -1;
   for (const [app, sec] of Object.entries(appUsageSeconds)) {
@@ -390,6 +463,11 @@ process.on("SIGTERM", markDeviceOffline);
 
 // Main Telemetry Loop
 async function startAgent() {
+  // If no email is configured, run 1-time setup prompt
+  if (!config.email) {
+    await performFirstTimeSetup();
+  }
+
   console.clear();
   console.log(`
 \x1b[35m╔══════════════════════════════════════════════════════════════════════╗
@@ -398,14 +476,14 @@ async function startAgent() {
 ╚══════════════════════════════════════════════════════════════════════╝\x1b[0m
 `);
 
-  console.log(` \x1b[1mTarget Environment\x1b[0m : \x1b[33m${config.env.toUpperCase()} (${fbConfig.projectId})\x1b[0m`);
   console.log(` \x1b[1mDevice Identifier\x1b[0m  : \x1b[36m${config.deviceId} (${os.hostname()})\x1b[0m`);
-  console.log(` \x1b[1mSample Cadence\x1b[0m     : Every ${config.sampleCadenceSeconds} seconds`);
-  console.log(` \x1b[1mFlush Cadence\x1b[0m      : Every ${config.flushCadenceSeconds} seconds`);
+  console.log(` \x1b[1mWindows User\x1b[0m       : \x1b[33m${os.userInfo().username}\x1b[0m`);
+  console.log(` \x1b[1mSampling Cadence\x1b[0m   : Every ${config.sampleCadenceSeconds} seconds (Flush every ${config.flushCadenceSeconds}s)`);
 
   await resolveUserProfile();
 
   console.log(`\n\x1b[32m✔ Telemetry streaming is ACTIVE.\x1b[0m Press Ctrl+C to stop.`);
+  console.log(`\x1b[90m(To switch users or re-configure this PC, run: npm run agent -- --reset)\x1b[0m`);
   console.log(`──────────────────────────────────────────────────────────────────────\n`);
 
   let lastFlushTime = Date.now();
@@ -415,18 +493,15 @@ async function startAgent() {
       const probeData = await runProbe();
       const now = new Date();
 
-      // State counters
       const sampleSec = config.sampleCadenceSeconds;
       if (probeData.state === "ACTIVE") todayTotals.activeSeconds += sampleSec;
       else if (probeData.state === "IDLE") todayTotals.idleSeconds += sampleSec;
       else if (probeData.state === "LOCKED") todayTotals.lockedSeconds += sampleSec;
       todayTotals.totalSeconds += sampleSec;
 
-      // Track app usage
       const appKey = probeData.processName || "System";
       appUsageSeconds[appKey] = (appUsageSeconds[appKey] || 0) + sampleSec;
 
-      // Pretty console tick output
       const timeStr = now.toLocaleTimeString();
       const stateColor =
         probeData.state === "ACTIVE"
@@ -443,7 +518,6 @@ async function startAgent() {
         `\r[${timeStr}] [${stateColor}] \x1b[1m${appKey.padEnd(16)}\x1b[0m : ${titleSnippet} | Idle: ${probeData.idleSeconds}s`
       );
 
-      // Check if interval should switch (window or state change)
       if (
         !activeInterval ||
         activeInterval.processName !== probeData.processName ||
@@ -471,17 +545,13 @@ async function startAgent() {
         lastFlushTime = Date.now();
       }
 
-      // Sync device heartbeat
       await syncDeviceHeartbeat(probeData);
     } catch (err) {
       console.error(`\n\x1b[31m[Tick Error]\x1b[0m ${err.message}`);
     }
   };
 
-  // Initial immediate tick
   await tick();
-
-  // Regular cadence
   setInterval(tick, config.sampleCadenceSeconds * 1000);
 }
 
