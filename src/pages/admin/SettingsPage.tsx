@@ -3,41 +3,48 @@ import {
   Settings,
   Building,
   Clock,
-  Coins,
   Palette,
   CheckCircle2,
-  RotateCcw,
   Monitor,
   ShieldCheck,
+  Laptop,
+  Download,
+  Activity,
+  FileArchive,
 } from "lucide-react";
 import { useHrms } from "../../lib/hrmsContext";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
+import { PageHeader } from "../../components/ui/PageHeader";
 
 export function SettingsPage() {
-  const { settings, updateSettings, resetAllData } = useHrms();
+  const { settings, updateSettings } = useHrms();
 
-  const [companyName, setCompanyName] = useState(settings.companyName || "");
-  const [legalEntityName, setLegalEntityName] = useState(settings.legalEntityName || "");
-  const [cin, setCin] = useState(settings.cin || "");
-  const [gstin, setGstin] = useState(settings.gstin || "");
-  const [pan, setPan] = useState(settings.pan || "");
-  const [address, setAddress] = useState(settings.address || "");
-  const [contactEmail, setContactEmail] = useState(settings.contactEmail || "");
-  const [contactPhone, setContactPhone] = useState(settings.contactPhone || "");
-  const [website, setWebsite] = useState(settings.website || "");
+  const [companyName, setCompanyName] = useState(
+    settings.companyName || "Gryphon Academy Pvt. Ltd."
+  );
+  const [legalEntityName, setLegalEntityName] = useState(
+    settings.legalEntityName || "Gryphon Academy Pvt. Ltd."
+  );
+  const [address, setAddress] = useState(
+    settings.address || "Pune Innovation Campus, Hinjawadi Phase 1, Pune, Maharashtra 411057"
+  );
+  const [contactEmail, setContactEmail] = useState(
+    settings.contactEmail || "info@gryphonacademy.co.in"
+  );
+  const [contactPhone, setContactPhone] = useState(
+    settings.contactPhone || "+91 (020) 6745-9000"
+  );
+  const [website, setWebsite] = useState(
+    settings.website || "https://gryphonacademy.co.in"
+  );
 
-  // Policies
+  // GA WORK-TIME Tracking Policies
   const [workingDays, setWorkingDays] = useState(settings.workingDaysPerWeek || 5);
   const [standardHours, setStandardHours] = useState(settings.dailyStandardHours || 9);
-  const [gracePeriod, setGracePeriod] = useState(settings.gracePeriodMinutes || 15);
-  const [payrollDay, setPayrollDay] = useState(settings.payrollCycleDay || 30);
-
-  // Statutory flags
-  const [epfEnabled, setEpfEnabled] = useState(settings.epfEnabled ?? true);
-  const [esicEnabled, setEsicEnabled] = useState(settings.esicEnabled ?? true);
-  const [ptEnabled, setPtEnabled] = useState(settings.ptEnabled ?? true);
+  const [idleThresholdMinutes, setIdleThresholdMinutes] = useState(5);
+  const [heartbeatIntervalSeconds, setHeartbeatIntervalSeconds] = useState(15);
   const [compactMode, setCompactMode] = useState(settings.compactMode ?? false);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -45,20 +52,12 @@ export function SettingsPage() {
     updateSettings({
       companyName,
       legalEntityName,
-      cin,
-      gstin,
-      pan,
       address,
       contactEmail,
       contactPhone,
       website,
       workingDaysPerWeek: Number(workingDays),
       dailyStandardHours: Number(standardHours),
-      gracePeriodMinutes: Number(gracePeriod),
-      payrollCycleDay: Number(payrollDay),
-      epfEnabled,
-      esicEnabled,
-      ptEnabled,
       compactMode,
     });
     setIsSaved(true);
@@ -67,32 +66,31 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-950 tracking-tight">
-            Company & System Settings
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Configure enterprise parameters, statutory compliance rules, and operational policies.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {isSaved && (
-            <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5 animate-fade-in">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Settings Saved
-            </span>
-          )}
-          <Button onClick={handleSave} variant="primary" size="md">
-            Save All Changes
-          </Button>
-        </div>
-      </div>
+      {/* Top Header */}
+      <PageHeader
+        title="GA WORK-TIME Settings & Configuration"
+        subtitle="Configure organization parameters, desktop telemetry rules, and workstation presence tracking policies"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Settings" },
+        ]}
+        actions={
+          <div className="flex items-center gap-3">
+            {isSaved && (
+              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5 animate-fade-in">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Settings Saved
+              </span>
+            )}
+            <Button onClick={handleSave} variant="primary" size="md">
+              Save All Changes
+            </Button>
+          </div>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Company Profile */}
+        {/* Organization Profile */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2.5">
@@ -100,8 +98,10 @@ export function SettingsPage() {
                 <Building className="w-4 h-4" />
               </div>
               <div>
-                <CardTitle>Company Profile & Legal Entity</CardTitle>
-                <p className="text-xs text-gray-500 mt-0.5">Primary enterprise identification details</p>
+                <CardTitle>Organization Profile & Identity</CardTitle>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Corporate identity shown across desktop agents and workforce reports
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -116,19 +116,14 @@ export function SettingsPage() {
               value={legalEntityName}
               onChange={(e) => setLegalEntityName(e.target.value)}
             />
-            <div className="grid grid-cols-2 gap-3">
-              <Input label="Corporate Identity No. (CIN)" value={cin} onChange={(e) => setCin(e.target.value)} />
-              <Input label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value)} />
-            </div>
-            <Input label="Income Tax PAN" value={pan} onChange={(e) => setPan(e.target.value)} />
             <Input
-              label="Headquarters Address"
+              label="Corporate Headquarters Address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             />
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Contact Email"
+                label="Support / Ops Email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
               />
@@ -138,20 +133,27 @@ export function SettingsPage() {
                 onChange={(e) => setContactPhone(e.target.value)}
               />
             </div>
+            <Input
+              label="Official Website"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
           </CardContent>
         </Card>
 
-        {/* Attendance & Payroll Policies */}
+        {/* Tracking Policies & Desktop Telemetry */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-800">
-                  <Clock className="w-4 h-4" />
+                  <Activity className="w-4 h-4 text-indigo-600" />
                 </div>
                 <div>
-                  <CardTitle>Attendance & Shift Policies</CardTitle>
-                  <p className="text-xs text-gray-500 mt-0.5">Daily schedules and late arrival thresholds</p>
+                  <CardTitle>Workstation Activity & Telemetry Rules</CardTitle>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Presence detection thresholds and shift schedules
+                  </p>
                 </div>
               </div>
             </CardHeader>
@@ -164,85 +166,83 @@ export function SettingsPage() {
                   onChange={(e) => setWorkingDays(Number(e.target.value))}
                 />
                 <Input
-                  label="Daily Standard Hours"
+                  label="Daily Target Work Hours"
                   type="number"
                   value={standardHours}
                   onChange={(e) => setStandardHours(Number(e.target.value))}
                 />
               </div>
 
-              <Input
-                label="Late Arrival Grace Period (Minutes)"
-                type="number"
-                value={gracePeriod}
-                onChange={(e) => setGracePeriod(Number(e.target.value))}
-                helperText="Buffer after scheduled shift start before marking employee as late."
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Inactivity Idle Trigger (Minutes)"
+                  type="number"
+                  value={idleThresholdMinutes}
+                  onChange={(e) => setIdleThresholdMinutes(Number(e.target.value))}
+                  helperText="Idle state triggers after no keyboard/mouse input."
+                />
+                <Input
+                  label="Heartbeat Cadence (Seconds)"
+                  type="number"
+                  value={heartbeatIntervalSeconds}
+                  onChange={(e) => setHeartbeatIntervalSeconds(Number(e.target.value))}
+                  helperText="Frequency of workstation telemetry sync."
+                />
+              </div>
             </CardContent>
           </Card>
 
+          {/* Desktop Agent Distribution Card */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-800">
-                  <Coins className="w-4 h-4" />
+                  <Laptop className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div>
-                  <CardTitle>Payroll & Statutory Modules</CardTitle>
-                  <p className="text-xs text-gray-500 mt-0.5">Mandatory deduction engines and cycle locks</p>
+                  <CardTitle>Windows Desktop Agent Client</CardTitle>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Official workstation client for GA WORK-TIME telemetry
+                  </p>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                label="Monthly Payroll Cut-off Day"
-                type="number"
-                value={payrollDay}
-                onChange={(e) => setPayrollDay(Number(e.target.value))}
-                helperText="Calendar day of month when monthly attendance snapshot is locked."
-              />
+            <CardContent className="space-y-3">
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-semibold text-gray-900">GA-Work-Time.exe (v1.2.0)</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    Win32 native background client • 36 KB standalone binary
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="/downloads/GA-Work-Time.zip"
+                    download="GA-Work-Time.zip"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 text-xs font-medium transition-colors"
+                  >
+                    <FileArchive className="w-3.5 h-3.5 text-gray-500" />
+                    <span>.ZIP</span>
+                  </a>
+                  <a
+                    href="/downloads/GA-Work-Time.exe"
+                    download="GA-Work-Time.exe"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-950 text-white rounded-lg hover:bg-black text-xs font-medium transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>.EXE</span>
+                  </a>
+                </div>
+              </div>
 
-              <div className="space-y-2 pt-2 border-t border-gray-100 text-xs">
-                <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="font-semibold text-gray-900">
-                    Enable Employees' Provident Fund (EPF 12%)
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={epfEnabled}
-                    onChange={(e) => setEpfEnabled(e.target.checked)}
-                    className="rounded text-gray-950 w-4 h-4 accent-gray-950"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="font-semibold text-gray-900">
-                    Enable Employee State Insurance (ESIC 0.75%)
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={esicEnabled}
-                    onChange={(e) => setEsicEnabled(e.target.checked)}
-                    className="rounded text-gray-950 w-4 h-4 accent-gray-950"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="font-semibold text-gray-900">
-                    Enable State Professional Tax (PT Slabs)
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={ptEnabled}
-                    onChange={(e) => setPtEnabled(e.target.checked)}
-                    className="rounded text-gray-950 w-4 h-4 accent-gray-950"
-                  />
-                </label>
+              <div className="text-[11px] text-text-muted flex items-center gap-1.5 pt-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Runs securely in user space without administrator rights.</span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Appearance & Display Settings */}
+          {/* Appearance & Viewport Settings */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2.5">
@@ -250,8 +250,10 @@ export function SettingsPage() {
                   <Monitor className="w-4 h-4" />
                 </div>
                 <div>
-                  <CardTitle>Display & Environment Settings</CardTitle>
-                  <p className="text-xs text-gray-500 mt-0.5">Desktop viewport and layout preferences</p>
+                  <CardTitle>Display & Viewport Layout</CardTitle>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    User interface density preferences
+                  </p>
                 </div>
               </div>
             </CardHeader>
@@ -284,27 +286,6 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Reset Demo Data Card */}
-          <div className="p-4 rounded-xl border border-amber-200/80 bg-amber-50/40 space-y-3">
-            <h3 className="font-bold text-xs text-amber-950">Local Database Reset</h3>
-            <p className="text-[11px] text-amber-900 leading-relaxed">
-              Clear all customized records and restore the pristine 32-employee enterprise demo dataset.
-            </p>
-            <Button
-              onClick={() => {
-                if (window.confirm("Are you sure? This will reset all LocalStorage tables to initial state.")) {
-                  resetAllData();
-                }
-              }}
-              variant="outline"
-              size="sm"
-              className="border-amber-300 text-amber-900 hover:bg-amber-100 text-xs"
-              leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-            >
-              Reset Demo Database
-            </Button>
-          </div>
         </div>
       </div>
     </div>

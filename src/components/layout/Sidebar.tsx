@@ -7,6 +7,8 @@ import {
   Clock,
   BarChart3,
   Activity,
+  Laptop,
+  Settings,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -42,23 +44,27 @@ export function Sidebar({
   const isSuperAdmin = role === "SUPER_ADMIN" || role === "HR_ADMIN";
   const isManager = role === "MANAGER";
 
-  // Exact Recommended Navigation Hierarchy per Role (Single Org / Pune Branch)
+  // GA WORK-TIME Focused Navigation Hierarchy
   const navItems: NavItem[] = isSuperAdmin
     ? [
         { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
         { label: "People", path: "/people/employees", icon: Users },
         { label: "Time Tracking", path: "/time/timeline", icon: Clock },
+        { label: "Workstations", path: "/devices", icon: Laptop },
         { label: "Reports", path: "/reports", icon: BarChart3 },
+        { label: "Settings", path: "/admin/settings", icon: Settings },
       ]
     : isManager
     ? [
         { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
         { label: "My Team", path: "/people/employees", icon: Users },
         { label: "Time Tracking", path: "/time/timeline", icon: Clock },
+        { label: "Workstations", path: "/devices", icon: Laptop },
         { label: "Reports", path: "/reports", icon: BarChart3 },
       ]
     : [
         { label: "My Activity", path: "/dashboard", icon: Activity },
+        { label: "Time Tracking", path: "/time/timeline", icon: Clock },
         { label: "My Reports", path: "/reports", icon: BarChart3 },
       ];
 

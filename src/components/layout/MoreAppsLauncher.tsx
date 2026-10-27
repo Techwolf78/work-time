@@ -2,14 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid,
-  Briefcase,
+  Clock,
   Laptop,
-  Target,
   ArrowRight,
   Shield,
   Layers,
 } from "lucide-react";
-import { useHrms } from "../../lib/hrmsContext";
 import { useAuth } from "../../lib/authContext";
 import { cn } from "../../lib/utils";
 
@@ -20,7 +18,6 @@ export function MoreAppsLauncher() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { jobs, assets, performanceGoals } = useHrms();
 
   const isAuthorized = user?.role === "SUPER_ADMIN" || user?.role === "HR_ADMIN";
 
@@ -56,46 +53,42 @@ export function MoreAppsLauncher() {
     return null;
   }
 
-  const openJobsCount = jobs.filter((j) => j.status === "OPEN").length;
-  const availableAssetsCount = assets.filter((a) => a.status === "AVAILABLE").length;
-  const activeOkrsCount = performanceGoals.length;
-
   const appModules = [
     {
-      id: "recruitment",
-      title: "Recruitment & ATS",
-      description: "Job requisitions, candidate pipeline, interviews & hiring stages.",
-      path: "/recruitment",
-      icon: Briefcase,
-      badgeText: `${openJobsCount} Open Roles`,
+      id: "timeline",
+      title: "24-Hour Activity Timeline",
+      description: "Continuous micro-intervals of foreground windows recorded by desktop agent.",
+      path: "/time/timeline",
+      icon: Clock,
+      badgeText: "24-Hour Stream",
       badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
       gradient: "from-indigo-600 to-violet-600 text-white",
       hoverBorder: "hover:border-indigo-400 hover:bg-indigo-50/40",
-      active: location.pathname.startsWith("/recruitment"),
+      active: location.pathname.startsWith("/time/timeline"),
     },
     {
-      id: "assets",
-      title: "Asset & IT Management",
-      description: "Hardware inventory, employee laptop assignments & return lifecycle.",
-      path: "/assets",
-      icon: Laptop,
-      badgeText: `${availableAssetsCount} Available`,
+      id: "applications",
+      title: "Application & Tool Usage",
+      description: "Executable breakdowns, foreground window focus, and tool analytics.",
+      path: "/time/applications",
+      icon: Layers,
+      badgeText: "Analytics",
       badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
       gradient: "from-teal-600 to-emerald-600 text-white",
       hoverBorder: "hover:border-emerald-400 hover:bg-emerald-50/40",
-      active: location.pathname.startsWith("/assets"),
+      active: location.pathname.startsWith("/time/applications"),
     },
     {
-      id: "performance",
-      title: "Performance & OKRs",
-      description: "Company & departmental goals, key results & 360 appraisal cycles.",
-      path: "/performance",
-      icon: Target,
-      badgeText: `${activeOkrsCount} Active Goals`,
+      id: "devices",
+      title: "Workstation Fleet Telemetry",
+      description: "Enrolled laptops, Windows versions, heartbeat status, and agent health.",
+      path: "/devices",
+      icon: Laptop,
+      badgeText: "Fleet Health",
       badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
       gradient: "from-amber-500 to-orange-600 text-white",
       hoverBorder: "hover:border-amber-400 hover:bg-amber-50/40",
-      active: location.pathname.startsWith("/performance"),
+      active: location.pathname.startsWith("/devices"),
     },
   ];
 
