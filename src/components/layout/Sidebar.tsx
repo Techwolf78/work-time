@@ -111,11 +111,11 @@ export function Sidebar({
           <div className="px-2.5 py-1.5 rounded-lg bg-gray-900/80 border border-gray-800/80 flex items-center justify-between text-xs">
             <div className="truncate">
               <p className="font-semibold text-white truncate text-[11px] leading-tight">
-                {company?.name || "Gryphon Technologies"}
+                {company?.name || "Gryphon Academy Pvt. Ltd."}
               </p>
               <p className="text-[10px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Pune HQ • Automated Telemetry</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>Pune HQ</span>
               </p>
             </div>
           </div>

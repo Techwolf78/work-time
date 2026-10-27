@@ -475,7 +475,7 @@ export function ReportsPage() {
             </p>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] text-emerald-700 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              <span>WorkPulse Agent v1.0.0 Online</span>
+              <span>GA WORK-TIME Agent Online</span>
             </div>
           </div>
         </div>
@@ -837,7 +837,7 @@ export function ReportsPage() {
             <div>
               <h3 className="text-sm font-semibold text-gray-950">Workstation Endpoint Inventory</h3>
               <p className="text-xs text-text-muted mt-0.5">
-                Enrolled Windows 10/11 machines running WorkPulse desktop agent
+                Enrolled Windows 10/11 machines running GA WORK-TIME desktop agent
               </p>
             </div>
             <Badge variant="success">All Agents Healthy</Badge>
@@ -898,7 +898,7 @@ export function ReportsPage() {
         <Shield className="w-4 h-4 text-gray-600 shrink-0 mt-0.5" />
         <div>
           <span className="font-semibold text-gray-900">Privacy by Design: </span>
-          WorkPulse captures only foreground application windows and idle duration via native Windows Win32 APIs. No keystrokes, clipboard items, screen captures, webcam video, or document contents are ever recorded.
+          GA WORK-TIME captures only foreground application windows and idle duration via native Windows Win32 APIs. No keystrokes, clipboard items, screen captures, webcam video, or document contents are ever recorded.
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 @echo off
-title WorkPulse Desktop Telemetry Agent
+title GA WORK-TIME Desktop Agent
 cd /d "%~dp0\.."
-echo Starting WorkPulse Desktop Telemetry Agent...
+echo Starting GA WORK-TIME Desktop Agent...
 node desktop-agent/agent.mjs %*
 pause

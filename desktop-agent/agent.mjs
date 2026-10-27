@@ -1,9 +1,9 @@
 /**
- * GA-Work-Time (WorkPulse) Native Desktop Telemetry Agent
+ * GA-Work-Time Native Desktop Telemetry Agent
  * 
  * Features One-Time Workstation Onboarding:
  * On Day 1, prompts for corporate email once, verifies against CRM users,
- * and permanently saves identity to %APPDATA%/WorkPulse/agent_config.json.
+ * and permanently saves identity to %APPDATA%/GA-Work-Time/agent_config.json.
  * On every subsequent day/boot, starts instantly with ZERO manual login.
  */
 
@@ -54,10 +54,21 @@ const FIREBASE_CONFIGS = {
 
 // Global AppData Directory for Windows Persistence
 const APPDATA_DIR = process.env.APPDATA
-  ? resolve(process.env.APPDATA, "WorkPulse")
-  : resolve(__dirname, ".workpulse");
+  ? resolve(process.env.APPDATA, "GA-Work-Time")
+  : resolve(__dirname, ".ga-work-time");
 const APPDATA_CONFIG_PATH = resolve(APPDATA_DIR, "agent_config.json");
 const LOCAL_CONFIG_PATH = resolve(__dirname, "config.json");
+
+// Check fallback legacy config if new one doesn't exist yet
+if (process.env.APPDATA && !existsSync(APPDATA_CONFIG_PATH)) {
+  const legacyConfig = resolve(process.env.APPDATA, "WorkPulse", "agent_config.json");
+  if (existsSync(legacyConfig)) {
+    try {
+      if (!existsSync(APPDATA_DIR)) mkdirSync(APPDATA_DIR, { recursive: true });
+      writeFileSync(APPDATA_CONFIG_PATH, readFileSync(legacyConfig, "utf-8"));
+    } catch {}
+  }
+}
 
 function ensureDirectory(dir) {
   if (!existsSync(dir)) {
@@ -180,7 +191,7 @@ async function performFirstTimeSetup() {
   console.clear();
   console.log(`
 \x1b[35m╔══════════════════════════════════════════════════════════════════════╗
-║        ⚡ GA-WORK-TIME (WORKPULSE) WORKSTATION SETUP                 ║
+║        ⚡ GA-WORK-TIME WORKSTATION SETUP                             ║
 ║                   One-Time Workstation Identity Pairing              ║
 ╚══════════════════════════════════════════════════════════════════════╝\x1b[0m
 
@@ -454,7 +465,7 @@ async function markDeviceOffline() {
     );
   } catch (e) {}
 
-  console.log("\x1b[32m[Done]\x1b[0m WorkPulse Desktop Agent stopped safely.");
+  console.log("\x1b[32m[Done]\x1b[0m GA-Work-Time Desktop Agent stopped safely.");
   process.exit(0);
 }
 
@@ -471,7 +482,7 @@ async function startAgent() {
   console.clear();
   console.log(`
 \x1b[35m╔══════════════════════════════════════════════════════════════════════╗
-║        ⚡ GA-WORK-TIME (WORKPULSE) DESKTOP TELEMETRY AGENT v1.2.0    ║
+║        ⚡ GA-WORK-TIME DESKTOP TELEMETRY AGENT v1.2.0                ║
 ║             Native Autonomous Windows Endpoint Activity Probe        ║
 ╚══════════════════════════════════════════════════════════════════════╝\x1b[0m
 `);

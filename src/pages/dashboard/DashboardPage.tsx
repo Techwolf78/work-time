@@ -387,8 +387,8 @@ export function DashboardPage() {
                 Setup Guide
               </Button>
               <a
-                href="/downloads/WorkPulse.exe"
-                download="WorkPulse.exe"
+                href="/downloads/GA-Work-Time.exe"
+                download="GA-Work-Time.exe"
                 className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-button text-xs font-medium bg-gray-950 text-white hover:bg-black shadow-xs transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -453,7 +453,7 @@ export function DashboardPage() {
                         <Monitor className="w-8 h-8 text-gray-300" />
                         <p className="font-medium text-gray-700">No workstation agents connected</p>
                         <p className="text-[11px] text-gray-400">
-                          Download and run <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono">WorkPulse.exe</code> to begin streaming live presence
+                          Download and run <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono">GA-Work-Time.exe</code> to begin streaming live presence
                         </p>
                       </div>
                     </td>

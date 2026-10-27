@@ -31,7 +31,7 @@ import { MOCK_DOC_PREVIEWS } from "./mockDocumentPreviews";
 
 export const initialCompany: Company = {
   id: "comp-ga-01",
-  name: "Gryphon Technologies India Pvt. Ltd.",
+  name: "Gryphon Academy Pvt. Ltd.",
   tagline: "Enterprise Workforce & Statutory Payroll Operations",
   cin: "U72900PN2022PTC215689",
   gstin: "27AABCG1234F1Z8",
@@ -1731,8 +1731,8 @@ export const initialAuditLogs: AuditLog[] = [
 ];
 
 export const initialSettings: CompanySettings = {
-  companyName: "Gryphon Technologies India Pvt. Ltd.",
-  legalEntityName: "Gryphon Technologies India Private Limited",
+  companyName: "Gryphon Academy Pvt. Ltd.",
+  legalEntityName: "Gryphon Academy Private Limited",
   cin: "U72900PN2022PTC215689",
   gstin: "27AABCG1234F1Z8",
   pan: "AABCG1234F",

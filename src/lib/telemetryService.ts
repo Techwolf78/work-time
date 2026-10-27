@@ -1,5 +1,5 @@
 /**
- * GA-Work-Time (WorkPulse) Real-time Firestore Telemetry Service
+ * GA-Work-Time Real-time Firestore Telemetry Service
  * 
  * Provides real-time subscriptions (onSnapshot) to:
  * - `timetrack_devices` (Workstation heartbeats and live statuses)

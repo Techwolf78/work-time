@@ -222,7 +222,7 @@ export function ActivityTimelinePage() {
               <span>24-Hour Continuous Timeline Band</span>
             </h3>
             <p className="text-xs text-text-muted mt-0.5">
-              Live intervals captured and synced by WorkPulse desktop agent
+              Live intervals captured and synced by GA WORK-TIME desktop agent
             </p>
           </div>
           <div className="flex items-center gap-3 text-xs flex-wrap">

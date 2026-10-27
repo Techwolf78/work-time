@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    GA-Work-Time (WorkPulse) Win32 Telemetry Probe
+    GA-Work-Time Win32 Telemetry Probe
 .DESCRIPTION
     Captures active foreground window title, process executable, and idle time
     using Win32 P/Invoke APIs (GetForegroundWindow, GetLastInputInfo, QueryFullProcessImageName).

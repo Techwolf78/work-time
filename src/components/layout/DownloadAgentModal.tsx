@@ -9,12 +9,12 @@ export interface DownloadAgentModalProps {
 }
 
 export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps) {
-  const downloadUrl = "/downloads/WorkPulse.exe";
+  const downloadUrl = "/downloads/GA-Work-Time.exe";
 
   const handleDownload = () => {
     const link = document.createElement("a");
     link.href = downloadUrl;
-    link.setAttribute("download", "WorkPulse.exe");
+    link.setAttribute("download", "GA-Work-Time.exe");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -31,10 +31,10 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
           </div>
           <div>
             <h3 className="text-base font-semibold text-text-primary">
-              Windows Desktop Agent
+              GA WORK-TIME Desktop Agent
             </h3>
             <p className="text-xs text-text-muted">
-              WorkPulse client for automated workstation presence tracking
+              Official desktop client for automated workstation presence tracking
             </p>
           </div>
         </div>
@@ -57,7 +57,7 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
               className="gap-1.5"
             >
               <Download className="w-3.5 h-3.5" />
-              Download .exe (22 KB)
+              Download .exe (34 KB)
             </Button>
           </div>
         </div>
@@ -66,7 +66,7 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
       <div className="space-y-4 text-sm">
         {/* Intro */}
         <div className="p-3.5 bg-gray-50 border border-surface-border rounded-lg text-text-secondary text-xs leading-relaxed">
-          The WorkPulse desktop agent runs in your Windows system tray. It eliminates manual timesheets by tracking active window presence and idle periods automatically.
+          The GA WORK-TIME desktop agent runs in your Windows system tray. It eliminates manual timesheets by tracking active window presence and idle periods automatically.
         </div>
 
         {/* 3 Step Setup */}
@@ -81,7 +81,7 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
               </span>
               <p className="font-medium text-xs text-text-primary">Download Executable</p>
               <p className="text-[11px] text-text-secondary mt-1">
-                Save <strong>WorkPulse.exe</strong> to your computer. No installation wizard required.
+                Save <strong>GA-Work-Time.exe</strong> to your computer. No installation wizard required.
               </p>
             </div>
 
@@ -122,7 +122,7 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
               <Check className="w-3.5 h-3.5 text-emerald-600" />
               <span className="font-medium text-text-primary">Single Sign-On Pairing</span>
             </div>
-            <span className="text-[11px] text-text-muted">Config stored in %APPDATA%\WorkPulse</span>
+            <span className="text-[11px] text-text-muted">Config stored in %APPDATA%\GA-Work-Time</span>
           </div>
 
           <div className="p-2.5 bg-gray-50 border border-surface-border rounded-lg flex items-center justify-between text-xs">

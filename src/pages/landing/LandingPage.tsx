@@ -57,7 +57,7 @@ export function LandingPage() {
           {/* Header */}
           <div className="space-y-3">
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-950">
-              WorkPulse for Windows
+              GA WORK-TIME for Windows
             </h1>
             <p className="text-sm sm:text-base text-neutral-600 leading-relaxed">
               Download the background agent to sync your work hours and active focus with the team dashboard. Runs quietly in your system tray.
@@ -69,7 +69,7 @@ export function LandingPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="font-semibold text-neutral-950 text-sm">
-                  WorkPulse Client v1.2.0
+                  GA WORK-TIME Client v1.2.0
                 </div>
                 <div className="text-xs text-neutral-500 mt-0.5">
                   Windows 10 / 11 • Standalone 34 KB • Auto-Updating
@@ -77,12 +77,12 @@ export function LandingPage() {
               </div>
 
               <a
-                href="/downloads/WorkPulse.exe"
-                download="WorkPulse.exe"
+                href="/downloads/GA-Work-Time.exe"
+                download="GA-Work-Time.exe"
                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-neutral-900 hover:bg-black text-white text-xs font-medium transition-colors shadow-xs"
               >
                 <Download className="w-4 h-4" />
-                <span>Download WorkPulse.exe</span>
+                <span>Download GA-Work-Time.exe</span>
               </a>
             </div>
 
@@ -150,7 +150,7 @@ export function LandingPage() {
 
       {/* Minimal Footer */}
       <footer className="h-14 border-t border-neutral-200 px-6 sm:px-10 flex items-center justify-between text-xs text-neutral-500">
-        <span>Gryphon Technologies • Pune HQ</span>
+        <span>Gryphon Academy Pvt. Ltd. • Pune HQ</span>
         <button
           onClick={() => setShowPrivacyModal(true)}
           className="hover:text-neutral-900 transition-colors flex items-center gap-1"

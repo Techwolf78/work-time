@@ -42,7 +42,7 @@ import { SelfOnboardingPage } from "./pages/people/SelfOnboardingPage";
 import { OnboardingSetupPage } from "./pages/admin/OnboardingSetupPage";
 import { useHrms } from "./lib/hrmsContext";
 
-// Telemetry & WorkPulse Pages
+// Telemetry & GA WORK-TIME Pages
 import { ActivityTimelinePage } from "./pages/time/ActivityTimelinePage";
 import { ApplicationUsagePage } from "./pages/time/ApplicationUsagePage";
 import { InactivityReviewPage } from "./pages/time/InactivityReviewPage";

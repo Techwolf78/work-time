@@ -36,7 +36,7 @@ export const prodFirebaseConfig = {
 /**
  * Determine active environment:
  * Default to 'dev' (Developer testing DB: authencation-39485) by default everywhere (localhost & Vercel)
- * so developers testing the live Vercel app and downloaded desktop agent (WorkPulse.exe)
+ * so developers testing the live Vercel app and downloaded desktop agent (GA-Work-Time.exe)
  * stream to the exact same test database and see each other's live records safely without touching prod.
  *
  * To toggle to 'prod' (gryphon-sync):

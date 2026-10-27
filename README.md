@@ -1,4 +1,4 @@
-# GA-Work-Time (WorkPulse)
+# GA-Work-Time
 
 > **Autonomous Windows Endpoint Activity Telemetry & Workforce Analytics Platform**  
 > Modern enterprise time tracking driven by native desktop telemetry — zero manual timesheets, zero stopwatch timers, zero surveillance overreach.
@@ -7,7 +7,7 @@
 
 ## 1. Product Overview & Philosophy
 
-**GA-Work-Time** (internal code name *WorkPulse*) is an automated employee time-tracking and endpoint activity telemetry platform designed specifically for Windows enterprise environments.
+**GA-Work-Time** is an automated employee time-tracking and endpoint activity telemetry platform designed specifically for Windows enterprise environments.
 
 Unlike traditional HR software, manual stopwatch timers, or intrusive spywares, GA-Work-Time operates on a fundamental engineering principle: **Work activity is captured automatically at the endpoint level via native operating system signals, without burdening employees with manual timesheet entry or compromising their personal privacy.**
 

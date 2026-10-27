@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    WorkPulse Desktop Telemetry Agent Launcher
+    GA WORK-TIME Desktop Agent Launcher
 #>
 $agentDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -Path "$agentDir\.."
-Write-Host "Starting WorkPulse Desktop Telemetry Agent..." -ForegroundColor Cyan
+Write-Host "Starting GA WORK-TIME Desktop Agent..." -ForegroundColor Cyan
 node desktop-agent/agent.mjs $args

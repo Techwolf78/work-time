@@ -140,12 +140,12 @@ export function LoginPage() {
           {/* Direct link to download desktop app */}
           <div className="pt-4 border-t border-neutral-100 text-center">
             <a
-              href="/downloads/WorkPulse.exe"
-              download="WorkPulse.exe"
+              href="/downloads/GA-Work-Time.exe"
+              download="GA-Work-Time.exe"
               className="inline-flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-950 transition-colors"
             >
               <Download className="w-3.5 h-3.5 text-neutral-500" />
-              <span>Need the desktop agent? Download WorkPulse (.exe)</span>
+              <span>Need the desktop agent? Download GA-Work-Time (.exe)</span>
             </a>
           </div>
         </div>
@@ -153,7 +153,7 @@ export function LoginPage() {
 
       {/* Simple Footer */}
       <footer className="max-w-md w-full mx-auto text-center text-xs text-neutral-400">
-        Gryphon Technologies • Pune HQ
+        Gryphon Academy Pvt. Ltd. • Pune HQ
       </footer>
     </div>
   );

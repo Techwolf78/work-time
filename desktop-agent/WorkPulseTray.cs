@@ -10,18 +10,18 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace WorkPulse {
+namespace GaWorkTime {
     public class Program {
         [STAThread]
         public static void Main(string[] args) {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new WorkPulseMainWindow(args));
+            Application.Run(new GaWorkTimeMainWindow(args));
         }
     }
 
-    public class WorkPulseMainWindow : Form {
-        // App Version
+    public class GaWorkTimeMainWindow : Form {
+        // App Version & Config
         public const string CURRENT_VERSION = "1.2.0";
         private const string FIREBASE_PROJECT = "authencation-39485";
         private const string FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/" + FIREBASE_PROJECT + "/databases/(default)/documents/";
@@ -75,6 +75,7 @@ namespace WorkPulse {
         private Timer updateCheckTimer;
 
         // Telemetry state
+        private string pulseDir;
         private string configPath;
         private string userEmail = "";
         private string userName = "";
@@ -87,18 +88,25 @@ namespace WorkPulse {
         private DateTime intervalStartTime = DateTime.UtcNow;
         private int totalActiveSeconds = 0;
         private int totalIdleSeconds = 0;
-        private int totalLockedSeconds = 0;
         private DateTime lastFlushTime = DateTime.UtcNow;
         private static readonly HttpClient httpClient = new HttpClient();
         private string pendingUpdateUrl = "";
 
-        public WorkPulseMainWindow(string[] args) {
+        public GaWorkTimeMainWindow(string[] args) {
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string pulseDir = Path.Combine(appData, "WorkPulse");
+            pulseDir = Path.Combine(appData, "GA-Work-Time");
             if (!Directory.Exists(pulseDir)) {
                 Directory.CreateDirectory(pulseDir);
             }
             configPath = Path.Combine(pulseDir, "agent_config.json");
+
+            // Backward compatibility check with legacy folder
+            if (!File.Exists(configPath)) {
+                string legacyPath = Path.Combine(appData, "WorkPulse", "agent_config.json");
+                if (File.Exists(legacyPath)) {
+                    try { File.Copy(legacyPath, configPath, true); } catch { }
+                }
+            }
 
             LoadConfiguration();
 
@@ -114,7 +122,7 @@ namespace WorkPulse {
         }
 
         private void InitializeComponent() {
-            this.Text = "WorkPulse • Workforce Telemetry";
+            this.Text = "GA WORK-TIME";
             this.Size = new Size(460, 640);
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -136,7 +144,7 @@ namespace WorkPulse {
 
             // Header Title & Logo
             Label logoLabel = new Label() {
-                Text = "⚡ WORK-TIME",
+                Text = "GA WORK-TIME",
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Color.White,
                 Location = new Point(18, 18),
@@ -150,10 +158,10 @@ namespace WorkPulse {
             };
 
             Label subtitleLabel = new Label() {
-                Text = "WorkPulse Client v" + CURRENT_VERSION,
+                Text = "Client v" + CURRENT_VERSION,
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
                 ForeColor = Color.FromArgb(148, 163, 184),
-                Location = new Point(130, 20),
+                Location = new Point(140, 20),
                 AutoSize = true
             };
 
@@ -173,7 +181,7 @@ namespace WorkPulse {
             closeBtn.MouseLeave += (s, e) => { closeBtn.ForeColor = Color.FromArgb(148, 163, 184); closeBtn.BackColor = Color.Transparent; };
             closeBtn.Click += (s, e) => {
                 this.Hide();
-                trayIcon.ShowBalloonTip(2000, "WorkPulse Running in Background", "Tracking continues silently in your system tray.", ToolTipIcon.Info);
+                trayIcon.ShowBalloonTip(2000, "GA WORK-TIME Running in Background", "Tracking continues silently in your system tray.", ToolTipIcon.Info);
             };
 
             // Window Minimize button
@@ -205,7 +213,7 @@ namespace WorkPulse {
                 Visible = false
             };
             updateLabel = new Label() {
-                Text = "⚡ New WorkPulse update available!",
+                Text = "⚡ New GA WORK-TIME update available!",
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(49, 46, 129),
                 Location = new Point(16, 13),
@@ -344,7 +352,7 @@ namespace WorkPulse {
             Label userDetails = new Label() {
                 Text = (string.IsNullOrEmpty(userName) ? "Employee" : userName) + " (" + userEmail + ")\n" +
                        "Computer: " + Environment.MachineName + " • " + Environment.OSVersion.VersionString + "\n" +
-                       "Telemetry Stream: Firestore (authencation-39485)",
+                       "Company: Gryphon Academy Pvt. Ltd.",
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
                 ForeColor = Color.FromArgb(51, 65, 85),
                 Location = new Point(16, 36),
@@ -589,7 +597,7 @@ namespace WorkPulse {
 
                     if (!string.IsNullOrEmpty(remoteVer) && CompareVersions(remoteVer, CURRENT_VERSION) > 0) {
                         pendingUpdateUrl = downloadUrl;
-                        updateLabel.Text = "⚡ WorkPulse v" + remoteVer + " is available!";
+                        updateLabel.Text = "⚡ New GA WORK-TIME v" + remoteVer + " is available!";
                         updatePanel.Visible = true;
                     }
                 }
@@ -601,9 +609,7 @@ namespace WorkPulse {
             updateButton.Enabled = false;
 
             try {
-                string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string pulseDir = Path.Combine(appData, "WorkPulse");
-                string newExePath = Path.Combine(pulseDir, "WorkPulse_new.exe");
+                string newExePath = Path.Combine(pulseDir, "GA-Work-Time_new.exe");
 
                 // Download latest .exe
                 string downloadUrl = pendingUpdateUrl;
@@ -658,20 +664,20 @@ namespace WorkPulse {
             trayMenu = new ContextMenuStrip();
             trayMenu.Font = new Font("Segoe UI", 9);
 
-            ToolStripMenuItem titleItem = new ToolStripMenuItem("WorkPulse • Active Focus") { Enabled = false, Font = new Font("Segoe UI", 9, FontStyle.Bold) };
-            ToolStripMenuItem openWindowItem = new ToolStripMenuItem("Open WorkPulse Window", null, (s, e) => {
+            ToolStripMenuItem titleItem = new ToolStripMenuItem("GA WORK-TIME • Active Focus") { Enabled = false, Font = new Font("Segoe UI", 9, FontStyle.Bold) };
+            ToolStripMenuItem openWindowItem = new ToolStripMenuItem("Open GA WORK-TIME Window", null, (s, e) => {
                 this.Show();
                 this.WindowState = FormWindowState.Normal;
                 this.BringToFront();
             });
             ToolStripMenuItem checkUpdateItem = new ToolStripMenuItem("Check for Updates...", null, (s, e) => {
                 CheckForUpdatesAsync();
-                MessageBox.Show("WorkPulse is checking for the latest version...", "Auto-Updater", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("GA WORK-TIME is checking for the latest version...", "Auto-Updater", MessageBoxButtons.OK, MessageBoxIcon.Information);
             });
             ToolStripMenuItem reconfigItem = new ToolStripMenuItem("Re-pair Account...", null, (s, e) => {
                 ShowSetupDialog();
             });
-            ToolStripMenuItem exitItem = new ToolStripMenuItem("Exit WorkPulse", null, (s, e) => {
+            ToolStripMenuItem exitItem = new ToolStripMenuItem("Exit GA WORK-TIME", null, (s, e) => {
                 trayIcon.Visible = false;
                 Application.Exit();
             });
@@ -687,7 +693,7 @@ namespace WorkPulse {
             trayIcon = new NotifyIcon() {
                 Icon = CreatePulseIcon(),
                 ContextMenuStrip = trayMenu,
-                Text = "WorkPulse • v" + CURRENT_VERSION,
+                Text = "GA WORK-TIME • v" + CURRENT_VERSION,
                 Visible = true
             };
             trayIcon.DoubleClick += (s, e) => {
@@ -709,7 +715,7 @@ namespace WorkPulse {
 
         private void ShowSetupDialog() {
             using (Form form = new Form()) {
-                form.Text = "WorkPulse • Workstation Setup";
+                form.Text = "GA WORK-TIME • Workstation Setup";
                 form.Size = new Size(420, 260);
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
                 form.StartPosition = FormStartPosition.CenterScreen;
