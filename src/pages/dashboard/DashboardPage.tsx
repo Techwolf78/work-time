@@ -453,7 +453,7 @@ export function DashboardPage() {
                         <Monitor className="w-8 h-8 text-gray-300" />
                         <p className="font-medium text-gray-700">No workstation agents connected</p>
                         <p className="text-[11px] text-gray-400">
-                          Launch <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono">npm run agent</code> on your machine to begin streaming
+                          Download and run <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono">WorkPulse.exe</code> to begin streaming live presence
                         </p>
                       </div>
                     </td>

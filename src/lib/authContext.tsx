@@ -88,7 +88,12 @@ export const DEMO_PERSONAS: Record<string, CurrentUser> = {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<CurrentUser | null>(() => {
-    return storage.get<CurrentUser | null>(STORAGE_KEYS.USER, null);
+    const cached = storage.get<CurrentUser | null>(STORAGE_KEYS.USER, null);
+    if (cached && (cached.id === "usr-admin-01" || cached.email === "admin@ga-hrms.io" || cached.email === "admin@gryphon.io")) {
+      storage.remove(STORAGE_KEYS.USER);
+      return null;
+    }
+    return cached;
   });
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -165,13 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error("Error synchronizing CRM user profile:", err);
         }
       } else {
-        // If no active Firebase session, check if a demo user was stored locally
-        const cached = storage.get<CurrentUser | null>(STORAGE_KEYS.USER, null);
-        if (cached && cached.id?.startsWith("usr-admin") || cached?.id?.startsWith("EMP-")) {
-          setUser(cached);
-        } else {
-          setUser(null);
-        }
+        setUser(null);
+        storage.remove(STORAGE_KEYS.USER);
       }
       setIsLoading(false);
     });

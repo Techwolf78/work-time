@@ -6,13 +6,10 @@ import {
   Lock,
   Mail,
   ArrowRight,
-  Building,
-  User,
   AlertCircle,
 } from "lucide-react";
-import { useAuth, DEMO_USERS } from "../../lib/authContext";
+import { useAuth } from "../../lib/authContext";
 import { activeEnv, firebaseConfig } from "../../lib/firebase";
-import { UserRole } from "../../types/hrms";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { GaHrmsLogo } from "../../components/ui/GaHrmsLogo";
@@ -24,7 +21,7 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const { loginWithFirebase, login, authError, clearAuthError } = useAuth();
+  const { loginWithFirebase, authError, clearAuthError } = useAuth();
   const navigate = useNavigate();
 
   // Primary Login using live Gryphon CRM Firebase Auth
@@ -46,15 +43,6 @@ export function LoginPage() {
     } catch (err: any) {
       setIsSubmitting(false);
       setLocalError(err.message || "Authentication failed. Please verify your credentials.");
-    }
-  };
-
-  // Offline Demo Persona Shortcut (for developer testing)
-  const handleQuickDemo = (roleKey: UserRole) => {
-    const demo = DEMO_USERS[roleKey];
-    if (demo) {
-      login(demo.email, roleKey, demo);
-      navigate("/dashboard");
     }
   };
 
@@ -204,58 +192,16 @@ export function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick Demo Offline Switcher */}
-          <div className="pt-4 border-t border-gray-100 space-y-2.5">
-            <div className="flex items-center justify-between text-[11px] text-gray-500">
-              <span className="font-semibold uppercase tracking-wider">
-                Or Quick Offline Preview
+            {/* Corporate Security Footer */}
+            <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Encrypted Session • Work-Time Telemetry</span>
               </span>
-              <span className="text-gray-400">Dev Shortcut</span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("SUPER_ADMIN")}
-                className="p-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-left transition-colors"
-                title="Log in as Super Admin"
-              >
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
-                  <Shield className="w-3.5 h-3.5 text-gray-700" />
-                  <span>Admin</span>
-                </div>
-                <div className="text-[10px] text-gray-500 mt-0.5">Admin Dept</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("MANAGER")}
-                className="p-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-left transition-colors"
-                title="Log in as Manager"
-              >
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
-                  <Building className="w-3.5 h-3.5 text-gray-700" />
-                  <span>Manager</span>
-                </div>
-                <div className="text-[10px] text-gray-500 mt-0.5">Head/Director</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("EMPLOYEE")}
-                className="p-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-left transition-colors"
-                title="Log in as Employee"
-              >
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
-                  <User className="w-3.5 h-3.5 text-gray-700" />
-                  <span>Employee</span>
-                </div>
-                <div className="text-[10px] text-gray-500 mt-0.5">Staff User</div>
-              </button>
+              <span>Pune HQ</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }

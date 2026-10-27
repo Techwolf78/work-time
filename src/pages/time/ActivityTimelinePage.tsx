@@ -38,7 +38,7 @@ export function ActivityTimelinePage() {
 
   // Employee Selection & Filters
   const [selectedEmpEmail, setSelectedEmpEmail] = useState<string>(
-    user?.email?.toLowerCase() || "ajay@gryphonacademy.co.in"
+    user?.email?.toLowerCase() || ""
   );
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [filterState, setFilterState] = useState<"all" | "active" | "idle" | "locked">("all");
@@ -54,6 +54,9 @@ export function ActivityTimelinePage() {
   useEffect(() => {
     fetchCrmEmployees().then((staff) => {
       setCrmStaff(staff);
+      if (staff.length > 0 && !selectedEmpEmail) {
+        setSelectedEmpEmail(staff[0].email.toLowerCase());
+      }
     });
 
     const unsubDevices = subscribeToTelemetryDevices((devs) => {

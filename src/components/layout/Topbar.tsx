@@ -69,7 +69,7 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
   }, []);
 
   // Today's attendance status for current logged in user
-  const todayStr = "2026-10-06";
+  const todayStr = new Date().toISOString().split("T")[0];
   const userTodayAttendance = attendance.find(
     (a) => a.employeeId === user?.employeeId && a.date === todayStr
   );
@@ -178,55 +178,10 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
           <span>{settings?.compactMode ? "Compact" : "Comfortable"}</span>
         </button>
 
-        {/* Fast Role Switcher */}
-        <div className="relative" ref={roleRef}>
-          <button
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200 transition-colors"
-          >
-            <Shield className="w-3.5 h-3.5 text-gray-700" />
-            <span>Role: {user?.role.replace("_", " ")}</span>
-            <ChevronDown className="w-3 h-3 text-gray-500" />
-          </button>
-
-          {showRoleMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-elevated border border-gray-200 p-2 z-50 animate-scale-in">
-              <p className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Switch Interactive Role
-              </p>
-              <div className="space-y-1">
-                {rolesList.map((r) => {
-                  const isCurrent =
-                    (r.key === "SUPER_ADMIN" && (user?.role === "SUPER_ADMIN" || user?.role === "HR_ADMIN")) ||
-                    user?.role === r.key;
-
-                  return (
-                    <button
-                      key={r.key}
-                      onClick={() => {
-                        switchRole(r.key as UserRole);
-                        setShowRoleMenu(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
-                        isCurrent
-                          ? "bg-gray-950 text-white font-semibold"
-                          : "hover:bg-gray-100 text-gray-900"
-                      }`}
-                    >
-                      <div className="font-semibold">{r.label}</div>
-                      <div
-                        className={`text-[10px] mt-0.5 ${
-                          isCurrent ? "text-gray-300" : "text-gray-500"
-                        }`}
-                      >
-                        {r.desc}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+        {/* User Role Indicator */}
+        <div className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">
+          <Shield className="w-3.5 h-3.5 text-gray-700" />
+          <span>Role: {user?.role.replace("_", " ")}</span>
         </div>
 
         {/* Notifications Popover */}

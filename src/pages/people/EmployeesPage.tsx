@@ -99,38 +99,27 @@ export function EmployeesPage() {
       });
     }
 
-    // Fallback to local HRMS list if CRM fetch is waiting
-    return employees.map((emp) => {
-      const emailLower = emp.email.toLowerCase();
-      const matchedDev = devices.find(
-        (d) => d.employeeEmail.toLowerCase() === emailLower || d.employeeId === emp.id
-      );
-
-      const dept = departments.find((d) => d.id === emp.departmentId)?.name || "Engineering";
-
-      return {
-        ...emp,
-        departmentName: dept,
-        workstation: matchedDev ? matchedDev.hostname : "Awaiting Agent",
-        os: matchedDev ? matchedDev.os : "Windows 10/11",
-        agentStatus: matchedDev
-          ? matchedDev.online
-            ? matchedDev.status === "active"
-              ? ("ACTIVE" as const)
-              : ("IDLE" as const)
-            : ("OFFLINE" as const)
-          : ("OFFLINE" as const),
-        todayTracked: matchedDev
-          ? formatSecondsToDuration(matchedDev.todayTrackedSeconds || 0)
-          : "0m",
-        weekTotal: matchedDev
-          ? formatSecondsToDuration(matchedDev.todayTrackedSeconds || 0)
-          : "0m",
-        activeApp: matchedDev ? matchedDev.currentApp : "Not reporting",
-        agentVersion: matchedDev ? matchedDev.agentVersion : "v1.2.0",
-      };
-    });
-  }, [crmStaff, employees, departments, devices]);
+    // If CRM users not loaded, show enrolled workstation devices (zero dummy mock employees)
+    return devices.map((dev) => ({
+      id: dev.deviceId || dev.id,
+      firstName: dev.employeeName || dev.employeeEmail.split("@")[0],
+      lastName: "",
+      email: dev.employeeEmail,
+      avatar: "",
+      departmentName: dev.department || "Operations",
+      workstation: dev.hostname,
+      os: dev.os || "Windows 10/11",
+      agentStatus: dev.online
+        ? dev.status === "active"
+          ? ("ACTIVE" as const)
+          : ("IDLE" as const)
+        : ("OFFLINE" as const),
+      todayTracked: formatSecondsToDuration(dev.todayTrackedSeconds || 0),
+      weekTotal: formatSecondsToDuration(dev.todayTrackedSeconds || 0),
+      activeApp: dev.currentApp || "System",
+      agentVersion: dev.agentVersion || "v1.2.0",
+    }));
+  }, [crmStaff, devices]);
 
   // Filtering
   const filteredList = useMemo(() => {
