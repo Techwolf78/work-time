@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from "./lib/authContext";
 import { ToastProvider } from "./lib/toastContext";
 import { HrmsProvider } from "./lib/hrmsContext";
 import { AppShell } from "./components/layout/AppShell";
-import { AddEmployeeModal } from "./pages/people/AddEmployeeModal";
 
 // GA WORK-TIME Core Pages
 import { LandingPage } from "./pages/landing/LandingPage";
@@ -49,24 +48,19 @@ function RoleRoute({
 }
 
 function MainAppContent() {
-  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
-
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
 
-        {/* Protected GA WORK-TIME Application Layout */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppShell
-                onOpenAddEmployee={() => setIsAddEmployeeOpen(true)}
-              />
-            </ProtectedRoute>
-          }
-        >
+      {/* Protected GA WORK-TIME Application Layout */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppShell />
+          </ProtectedRoute>
+        }
+      >
           {/* Dashboard / Overview */}
           <Route path="/dashboard" element={<DashboardPage />} />
 
@@ -173,13 +167,6 @@ function MainAppContent() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
-
-      {/* Global Modals */}
-      <AddEmployeeModal
-        isOpen={isAddEmployeeOpen}
-        onClose={() => setIsAddEmployeeOpen(false)}
-      />
-    </>
   );
 }
 
