@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -12,6 +12,7 @@ import {
   Building2,
   Activity,
   UserCheck,
+  Monitor,
 } from "lucide-react";
 import { useHrms } from "../../lib/hrmsContext";
 import { useAuth } from "../../lib/authContext";
@@ -21,6 +22,13 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { cn } from "../../lib/utils";
+import {
+  fetchCrmEmployees,
+  subscribeToTelemetryDevices,
+  formatSecondsToDuration,
+  CrmEmployeeSummary,
+  TelemetryDevice,
+} from "../../lib/telemetryService";
 
 export function EmployeesPage() {
   const { employees, departments } = useHrms();
@@ -33,34 +41,96 @@ export function EmployeesPage() {
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "IDLE" | "OFFLINE">("ALL");
 
-  // Telemetry attributes mapped to each employee
-  const employeesWithTelemetry = useMemo(() => {
-    const workstations = [
-      { hostname: "DESKTOP-AJAYP", os: "Windows 11 Pro", status: "ACTIVE" as const, tracked: "6h 45m", week: "32h 10m", currentApp: "VS Code" },
-      { hostname: "LAPTOP-PRIYA", os: "Windows 11 Enterprise", status: "ACTIVE" as const, tracked: "6h 12m", week: "30h 40m", currentApp: "Chrome" },
-      { hostname: "DESKTOP-RAJESH", os: "Windows 11 Pro", status: "ACTIVE" as const, tracked: "7h 05m", week: "34h 50m", currentApp: "Figma" },
-      { hostname: "LAPTOP-ANANYA", os: "Windows 10 Pro", status: "IDLE" as const, tracked: "5h 40m", week: "28h 15m", currentApp: "Idle (>5m)" },
-      { hostname: "LAPTOP-VIKRAM", os: "Windows 11 Home", status: "ACTIVE" as const, tracked: "6h 30m", week: "31h 00m", currentApp: "Slack" },
-      { hostname: "DESKTOP-SNEHA", os: "Windows 11 Pro", status: "OFFLINE" as const, tracked: "4h 10m", week: "24h 30m", currentApp: "Offline" },
-    ];
+  // Real-time Firestore state
+  const [crmStaff, setCrmStaff] = useState<CrmEmployeeSummary[]>([]);
+  const [devices, setDevices] = useState<TelemetryDevice[]>([]);
 
-    return employees.map((emp, index) => {
-      const mockWs = workstations[index % workstations.length];
+  useEffect(() => {
+    fetchCrmEmployees().then((staff) => {
+      setCrmStaff(staff);
+    });
+
+    const unsub = subscribeToTelemetryDevices((devs) => {
+      setDevices(devs);
+    });
+
+    return () => unsub();
+  }, []);
+
+  // Map real employees and cross-reference with enrolled workstation devices
+  const employeesWithTelemetry = useMemo(() => {
+    // If CRM users loaded, prioritize CRM users
+    if (crmStaff.length > 0) {
+      return crmStaff.map((staff) => {
+        const emailLower = staff.email.toLowerCase();
+        const matchedDev = devices.find(
+          (d) => d.employeeEmail.toLowerCase() === emailLower || d.employeeId === staff.id
+        );
+
+        const nameParts = staff.name.trim().split(" ");
+        const firstName = nameParts[0] || staff.name;
+        const lastName = nameParts.slice(1).join(" ") || "";
+
+        return {
+          id: staff.id,
+          firstName,
+          lastName,
+          email: staff.email,
+          avatar: "",
+          departmentName: staff.department || "Operations",
+          workstation: matchedDev ? matchedDev.hostname : "Awaiting Agent",
+          os: matchedDev ? matchedDev.os : "Windows 10/11",
+          agentStatus: matchedDev
+            ? matchedDev.online
+              ? matchedDev.status === "active"
+                ? ("ACTIVE" as const)
+                : ("IDLE" as const)
+              : ("OFFLINE" as const)
+            : ("OFFLINE" as const),
+          todayTracked: matchedDev
+            ? formatSecondsToDuration(matchedDev.todayTrackedSeconds || 0)
+            : "0m",
+          weekTotal: matchedDev
+            ? formatSecondsToDuration(matchedDev.todayTrackedSeconds || 0)
+            : "0m",
+          activeApp: matchedDev ? matchedDev.currentApp : "Not reporting",
+          agentVersion: matchedDev ? matchedDev.agentVersion : "v1.2.0",
+        };
+      });
+    }
+
+    // Fallback to local HRMS list if CRM fetch is waiting
+    return employees.map((emp) => {
+      const emailLower = emp.email.toLowerCase();
+      const matchedDev = devices.find(
+        (d) => d.employeeEmail.toLowerCase() === emailLower || d.employeeId === emp.id
+      );
+
       const dept = departments.find((d) => d.id === emp.departmentId)?.name || "Engineering";
 
       return {
         ...emp,
         departmentName: dept,
-        workstation: mockWs.hostname,
-        os: mockWs.os,
-        agentStatus: mockWs.status,
-        todayTracked: mockWs.tracked,
-        weekTotal: mockWs.week,
-        activeApp: mockWs.currentApp,
-        agentVersion: "v1.0.0",
+        workstation: matchedDev ? matchedDev.hostname : "Awaiting Agent",
+        os: matchedDev ? matchedDev.os : "Windows 10/11",
+        agentStatus: matchedDev
+          ? matchedDev.online
+            ? matchedDev.status === "active"
+              ? ("ACTIVE" as const)
+              : ("IDLE" as const)
+            : ("OFFLINE" as const)
+          : ("OFFLINE" as const),
+        todayTracked: matchedDev
+          ? formatSecondsToDuration(matchedDev.todayTrackedSeconds || 0)
+          : "0m",
+        weekTotal: matchedDev
+          ? formatSecondsToDuration(matchedDev.todayTrackedSeconds || 0)
+          : "0m",
+        activeApp: matchedDev ? matchedDev.currentApp : "Not reporting",
+        agentVersion: matchedDev ? matchedDev.agentVersion : "v1.2.0",
       };
     });
-  }, [employees, departments]);
+  }, [crmStaff, employees, departments, devices]);
 
   // Filtering
   const filteredList = useMemo(() => {
@@ -113,17 +183,17 @@ export function EmployeesPage() {
             {isManager ? "Team Members" : "Total Workforce"}
           </p>
           <p className="text-2xl font-bold text-gray-950 mt-1">{filteredList.length}</p>
-          <p className="text-[11px] text-text-muted mt-0.5">Enrolled Windows endpoints</p>
+          <p className="text-[11px] text-text-muted mt-0.5">Enrolled staff accounts</p>
         </div>
 
         <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-xs">
           <p className="text-xs font-medium text-text-muted">Active Agents</p>
           <p className="text-2xl font-bold text-emerald-600 mt-1">{activeCount}</p>
-          <p className="text-[11px] text-emerald-700 mt-0.5">Active input detected</p>
+          <p className="text-[11px] text-text-muted mt-0.5">Physical input detected</p>
         </div>
 
         <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-xs">
-          <p className="text-xs font-medium text-text-muted">Idle / Away</p>
+          <p className="text-xs font-medium text-text-muted">Idle Workstations</p>
           <p className="text-2xl font-bold text-amber-600 mt-1">{idleCount}</p>
           <p className="text-[11px] text-text-muted mt-0.5">&gt;5m inactivity threshold</p>
         </div>
@@ -157,11 +227,11 @@ export function EmployeesPage() {
                 className="bg-white border border-gray-200 text-xs rounded-lg px-2.5 py-1.5 text-gray-700 focus:outline-none shadow-2xs font-medium"
               >
                 <option value="ALL">All Departments</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
+                <option value="Admin">Admin</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Sales">Sales</option>
+                <option value="Placement">Placement</option>
+                <option value="Operations">Operations</option>
               </select>
             )}
 
@@ -221,16 +291,16 @@ export function EmployeesPage() {
                           className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center font-semibold text-xs border border-gray-200 shrink-0">
-                          {emp.firstName[0]}
-                          {emp.lastName[0]}
+                        <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-semibold text-xs border border-indigo-200 shrink-0">
+                          {emp.firstName?.[0] || "U"}
+                          {emp.lastName?.[0] || ""}
                         </div>
                       )}
                       <div>
                         <p className="font-semibold text-gray-950">
                           {emp.firstName} {emp.lastName}
                         </p>
-                        <p className="text-[11px] text-text-muted">{emp.email}</p>
+                        <p className="text-[11px] text-text-muted font-mono">{emp.email}</p>
                       </div>
                     </div>
                   </td>
@@ -244,7 +314,7 @@ export function EmployeesPage() {
                   <td className="py-3 px-4">
                     {emp.agentStatus === "ACTIVE" && (
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         Active • {emp.activeApp}
                       </span>
                     )}

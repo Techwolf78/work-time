@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Clock,
   Laptop,
@@ -26,6 +26,18 @@ import { PageHeader } from "../../components/ui/PageHeader";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Modal } from "../../components/ui/Modal";
 import { exportToCsv, cn } from "../../lib/utils";
+import {
+  subscribeToDailySummaries,
+  subscribeToTelemetryDevices,
+  subscribeToActivityLogs,
+  fetchAllDailySummaries,
+  saveInactivityExplanation,
+  formatSecondsToDuration,
+  getTodayDateString,
+  DailySummaryRecord,
+  TelemetryDevice,
+  ActivityIntervalRecord,
+} from "../../lib/telemetryService";
 
 type ReportTab = "DAILY_SUMMARY" | "APP_USAGE" | "WORKSTATION_HEALTH";
 
@@ -66,390 +78,169 @@ export function ReportsPage() {
   // Offline Inactivity Explanation Modal state
   const [selectedRecordForNote, setSelectedRecordForNote] = useState<DailyRecord | null>(null);
   const [inactivityReason, setInactivityReason] = useState("");
-  const [offlineNotes, setOfflineNotes] = useState<Record<string, string>>({
-    "2026-10-23": "Whiteboard system architecture design & tech specs review",
-  });
 
-  const currentEmpName = user?.name || "Ananya Iyer";
-  const currentEmpId = user?.employeeId || "EMP-1004";
-  const currentDept = user?.department || "Engineering";
-  const currentWorkstation = "LAPTOP-ENDPOINT";
+  const currentEmpName = user?.name || "Ajay Pawar";
+  const currentEmpId = user?.employeeId || user?.email || "EMP-1001";
+  const currentDept = user?.crmDepartment || user?.department || "Engineering";
+  const currentWorkstation = "Workstation";
 
   // Dynamic Date calculations relative to current system time
   const todayObj = useMemo(() => new Date(), []);
-  const todayStr = useMemo(() => {
-    // Format YYYY-MM-DD
-    const y = todayObj.getFullYear();
-    const m = String(todayObj.getMonth() + 1).padStart(2, "0");
-    const d = String(todayObj.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }, [todayObj]);
+  const todayStr = useMemo(() => getTodayDateString(), []);
 
-  // Generate 7-day Historical Records with robust fallbacks
-  const dailySummaryData = useMemo<DailyRecord[]>(() => {
-    // Helper to generate past dates
-    const getPastDateStr = (daysAgo: number) => {
-      const d = new Date(todayObj);
-      d.setDate(d.getDate() - daysAgo);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return {
-        iso: `${y}-${m}-${day}`,
-        display:
-          daysAgo === 0
-            ? `Today (${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })})`
-            : daysAgo === 1
-            ? `Yesterday (${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })})`
-            : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
-      };
+  // Real-time Firestore Telemetry state
+  const [liveSummaries, setLiveSummaries] = useState<DailySummaryRecord[]>([]);
+  const [liveDevices, setLiveDevices] = useState<TelemetryDevice[]>([]);
+  const [liveLogs, setLiveLogs] = useState<ActivityIntervalRecord[]>([]);
+
+  useEffect(() => {
+    // 1. Subscribe to all daily summaries
+    const unsubSums = subscribeToDailySummaries("", (sums) => {
+      setLiveSummaries(sums);
+    });
+
+    fetchAllDailySummaries().then((sums) => {
+      if (sums.length > 0) setLiveSummaries(sums);
+    });
+
+    // 2. Subscribe to devices for Workstation Health tab
+    const unsubDevs = subscribeToTelemetryDevices((devs) => {
+      setLiveDevices(devs);
+    });
+
+    // 3. Subscribe to recent activity logs for App Usage tab
+    const unsubLogs = subscribeToActivityLogs({}, (logs) => {
+      setLiveLogs(logs);
+    });
+
+    return () => {
+      unsubSums();
+      unsubDevs();
+      unsubLogs();
     };
+  }, []);
 
-    const d0 = getPastDateStr(0);
-    const d1 = getPastDateStr(1);
-    const d2 = getPastDateStr(2);
-    const d3 = getPastDateStr(3);
-    const d4 = getPastDateStr(4);
-    const d5 = getPastDateStr(5);
-    const d6 = getPastDateStr(6);
-
-    // Baseline records for the logged-in employee across 7 days
-    const employeePersonalLogs: DailyRecord[] = [
-      {
-        date: d0.iso,
-        displayDay: d0.display,
-        empId: currentEmpId,
-        name: currentEmpName,
-        dept: currentDept,
-        device: currentWorkstation,
-        totalHours: 6.75,
-        total: "6h 45m",
-        active: "5h 52m",
-        activeMinutes: 352,
-        idle: "53m",
-        idleMinutes: 53,
-        focusRatio: "87%",
-        focusRatioNum: 87,
-        topApp: "Visual Studio Code",
-        status: "In Progress",
-      },
-      {
-        date: d1.iso,
-        displayDay: d1.display,
-        empId: currentEmpId,
-        name: currentEmpName,
-        dept: currentDept,
-        device: currentWorkstation,
-        totalHours: 7.75,
-        total: "7h 45m",
-        active: "6h 50m",
-        activeMinutes: 410,
-        idle: "55m",
-        idleMinutes: 55,
-        focusRatio: "88%",
-        focusRatioNum: 88,
-        topApp: "Visual Studio Code",
-        status: "Full Shift",
-      },
-      {
-        date: d2.iso,
-        displayDay: d2.display,
-        empId: currentEmpId,
-        name: currentEmpName,
-        dept: currentDept,
-        device: currentWorkstation,
-        totalHours: 8.16,
-        total: "8h 10m",
-        active: "7h 15m",
-        activeMinutes: 435,
-        idle: "55m",
-        idleMinutes: 55,
-        focusRatio: "89%",
-        focusRatioNum: 89,
-        topApp: "Visual Studio Code",
-        status: "Full Shift",
-      },
-      {
-        date: d3.iso,
-        displayDay: d3.display,
-        empId: currentEmpId,
-        name: currentEmpName,
-        dept: currentDept,
-        device: currentWorkstation,
-        totalHours: 7.5,
-        total: "7h 30m",
-        active: "6h 35m",
-        activeMinutes: 395,
-        idle: "55m",
-        idleMinutes: 55,
-        focusRatio: "87%",
-        focusRatioNum: 87,
-        topApp: "Visual Studio Code",
-        status: "Full Shift",
-      },
-      {
-        date: d4.iso,
-        displayDay: d4.display,
-        empId: currentEmpId,
-        name: currentEmpName,
-        dept: currentDept,
-        device: currentWorkstation,
-        totalHours: 8.08,
-        total: "8h 05m",
-        active: "7h 00m",
-        activeMinutes: 420,
-        idle: "1h 05m",
-        idleMinutes: 65,
-        focusRatio: "86%",
-        focusRatioNum: 86,
-        topApp: "Visual Studio Code",
-        status: "Full Shift",
-      },
-      {
-        date: d5.iso,
-        displayDay: d5.display,
-        empId: currentEmpId,
-        name: currentEmpName,
-        dept: currentDept,
-        device: currentWorkstation,
-        totalHours: 7.33,
-        total: "7h 20m",
-        active: "6h 25m",
-        activeMinutes: 385,
-        idle: "55m",
-        idleMinutes: 55,
-        focusRatio: "87%",
-        focusRatioNum: 87,
-        topApp: "Visual Studio Code",
-        status: "Full Shift",
-      },
-      {
-        date: d6.iso,
-        displayDay: d6.display,
-        empId: currentEmpId,
-        name: currentEmpName,
-        dept: currentDept,
-        device: currentWorkstation,
-        totalHours: 7.83,
-        total: "7h 50m",
-        active: "6h 55m",
-        activeMinutes: 415,
-        idle: "55m",
-        idleMinutes: 55,
-        focusRatio: "88%",
-        focusRatioNum: 88,
-        topApp: "Visual Studio Code",
-        status: "Full Shift",
-      },
-    ];
+  // Map Real Daily Summary Records from Firestore
+  const dailySummaryData = useMemo<DailyRecord[]>(() => {
+    const list: DailyRecord[] = liveSummaries.map((s) => ({
+      date: s.date,
+      displayDay: s.date === todayStr ? `Today (${s.date})` : s.date,
+      empId: s.employeeId || s.employeeEmail,
+      name: s.employeeName,
+      dept: s.department || "Engineering",
+      device: s.deviceId,
+      totalHours: Math.round(((s.observedSeconds || 0) / 3600) * 100) / 100,
+      total: formatSecondsToDuration(s.observedSeconds),
+      active: formatSecondsToDuration(s.activeSeconds),
+      activeMinutes: Math.round((s.activeSeconds || 0) / 60),
+      idle: formatSecondsToDuration(s.idleSeconds),
+      idleMinutes: Math.round((s.idleSeconds || 0) / 60),
+      focusRatio: s.focusRatio || "100%",
+      focusRatioNum: s.focusRatioNum || 100,
+      topApp: s.topApp || "System",
+      inactivityNote: s.inactivityNote,
+      status: s.status,
+    }));
 
     if (isEmployee) {
-      // Map user-submitted offline explanation notes
-      return employeePersonalLogs.map((log) => ({
-        ...log,
-        inactivityNote: offlineNotes[log.date] || log.inactivityNote,
-      }));
-    }
-
-    // Admin / Manager fleet team logs
-    const fleetTeamLogs: DailyRecord[] = [
-      ...employeePersonalLogs,
-      {
-        date: d0.iso,
-        displayDay: d0.display,
-        empId: "EMP-1001",
-        name: "Ajay Pawar",
-        dept: "Engineering",
-        device: "DESKTOP-AJAYP",
-        totalHours: 6.75,
-        total: "6h 45m",
-        active: "5h 52m",
-        activeMinutes: 352,
-        idle: "53m",
-        idleMinutes: 53,
-        focusRatio: "87%",
-        focusRatioNum: 87,
-        topApp: "VS Code",
-        status: "In Progress",
-      },
-      {
-        date: d0.iso,
-        displayDay: d0.display,
-        empId: "EMP-1002",
-        name: "Priya Sharma",
-        dept: "Human Resources",
-        device: "LAPTOP-PRIYA",
-        totalHours: 6.2,
-        total: "6h 12m",
-        active: "5h 20m",
-        activeMinutes: 320,
-        idle: "52m",
-        idleMinutes: 52,
-        focusRatio: "86%",
-        focusRatioNum: 86,
-        topApp: "Chrome",
-        status: "In Progress",
-      },
-      {
-        date: d0.iso,
-        displayDay: d0.display,
-        empId: "EMP-1003",
-        name: "Rajesh Kulkarni",
-        dept: "Engineering",
-        device: "DESKTOP-RAJESH",
-        totalHours: 7.08,
-        total: "7h 05m",
-        active: "6h 15m",
-        activeMinutes: 375,
-        idle: "50m",
-        idleMinutes: 50,
-        focusRatio: "88%",
-        focusRatioNum: 88,
-        topApp: "Figma",
-        status: "In Progress",
-      },
-      {
-        date: d0.iso,
-        displayDay: d0.display,
-        empId: "EMP-1005",
-        name: "Vikram Malhotra",
-        dept: "Product",
-        device: "LAPTOP-VIKRAM",
-        totalHours: 6.5,
-        total: "6h 30m",
-        active: "5h 40m",
-        activeMinutes: 340,
-        idle: "50m",
-        idleMinutes: 50,
-        focusRatio: "87%",
-        focusRatioNum: 87,
-        topApp: "Slack",
-        status: "In Progress",
-      },
-      {
-        date: d0.iso,
-        displayDay: d0.display,
-        empId: "EMP-1006",
-        name: "Sneha Patil",
-        dept: "Design",
-        device: "DESKTOP-SNEHA",
-        totalHours: 4.16,
-        total: "4h 10m",
-        active: "3h 40m",
-        activeMinutes: 220,
-        idle: "30m",
-        idleMinutes: 30,
-        focusRatio: "88%",
-        focusRatioNum: 88,
-        topApp: "Photoshop",
-        status: "Partial Shift",
-      },
-      {
-        date: d1.iso,
-        displayDay: d1.display,
-        empId: "EMP-1001",
-        name: "Ajay Pawar",
-        dept: "Engineering",
-        device: "DESKTOP-AJAYP",
-        totalHours: 7.33,
-        total: "7h 20m",
-        active: "6h 25m",
-        activeMinutes: 385,
-        idle: "55m",
-        idleMinutes: 55,
-        focusRatio: "87%",
-        focusRatioNum: 87,
-        topApp: "VS Code",
-        status: "Full Shift",
-      },
-    ];
-
-    if (isManager) {
-      return fleetTeamLogs.filter(
-        (r) => r.dept === "Engineering" || r.name.includes("Ananya") || r.name.includes("Ajay")
+      const myEmail = (user?.email || "").toLowerCase();
+      return list.filter(
+        (r) =>
+          r.empId.toLowerCase() === myEmail ||
+          r.empId === user?.employeeId
       );
     }
 
-    return fleetTeamLogs;
-  }, [
-    todayObj,
-    isEmployee,
-    isManager,
-    currentEmpId,
-    currentEmpName,
-    currentDept,
-    currentWorkstation,
-    offlineNotes,
-  ]);
+    if (isManager) {
+      const myDept = (user?.crmDepartment || user?.department || "Engineering").toLowerCase();
+      return list.filter((r) => r.dept.toLowerCase() === myDept);
+    }
 
-  // Employee's Personal App Usage
-  const employeePersonalApps = [
-    {
-      app: "Visual Studio Code",
-      exe: "Code.exe",
-      category: "Work" as const,
-      totalTime: "26h 15m",
-      minutes: 1575,
-      pct: 54,
-      desc: "Source code editing, debugging & unit test execution",
-    },
-    {
-      app: "Google Chrome",
-      exe: "chrome.exe",
-      category: "Neutral" as const,
-      totalTime: "11h 20m",
-      minutes: 680,
-      pct: 23,
-      desc: "API documentation, GitHub PR review, web research",
-    },
-    {
-      app: "Windows Terminal (PowerShell)",
-      exe: "wt.exe",
-      category: "Work" as const,
-      totalTime: "5h 45m",
-      minutes: 345,
-      pct: 12,
-      desc: "Docker containers, build pipelines, git CLI",
-    },
-    {
-      app: "Slack Desktop",
-      exe: "slack.exe",
-      category: "Work" as const,
-      totalTime: "3h 30m",
-      minutes: 210,
-      pct: 7,
-      desc: "Team engineering standups and async coordination",
-    },
-    {
-      app: "Spotify Music",
-      exe: "Spotify.exe",
-      category: "Restricted" as const,
-      totalTime: "1h 40m",
-      minutes: 100,
-      pct: 4,
-      desc: "Background audio streaming",
-    },
-  ];
+    return list;
+  }, [liveSummaries, isEmployee, isManager, user, todayStr]);
+
+  // Dynamic Personal App Usage aggregated from real logs
+  const employeePersonalApps = useMemo(() => {
+    const myEmail = (user?.email || "").toLowerCase();
+    const userLogs = liveLogs.filter(
+      (l) =>
+        (l.employeeEmail && l.employeeEmail.toLowerCase() === myEmail) ||
+        l.employeeId === user?.employeeId
+    );
+
+    const appMap: Record<string, { seconds: number; exe: string; category: "Work" | "Neutral" | "Restricted" }> = {};
+    let totalSec = 0;
+
+    userLogs.forEach((l) => {
+      const app = l.executable || "System";
+      if (!appMap[app]) {
+        appMap[app] = {
+          seconds: 0,
+          exe: l.executable,
+          category: l.category === "work" ? "Work" : l.category === "restricted" ? "Restricted" : "Neutral",
+        };
+      }
+      appMap[app].seconds += l.durationSeconds || 0;
+      totalSec += l.durationSeconds || 0;
+    });
+
+    return Object.entries(appMap)
+      .map(([app, d]) => ({
+        app,
+        exe: d.exe,
+        category: d.category,
+        totalTime: formatSecondsToDuration(d.seconds),
+        minutes: Math.round(d.seconds / 60),
+        pct: totalSec > 0 ? Math.round((d.seconds / totalSec) * 100) : 0,
+        desc: "Foreground window activity recorded on workstation",
+      }))
+      .sort((a, b) => b.minutes - a.minutes);
+  }, [liveLogs, user]);
 
   // Fleet App Usage (for Admin / Manager)
-  const fleetAppUsage = [
-    { app: "Visual Studio Code", exe: "Code.exe", category: "Work", totalTime: "48h 20m", activeUsers: 14, pct: 45 },
-    { app: "Google Chrome", exe: "chrome.exe", category: "Neutral", totalTime: "24h 15m", activeUsers: 22, pct: 23 },
-    { app: "Windows Terminal (PowerShell)", exe: "wt.exe", category: "Work", totalTime: "12h 40m", activeUsers: 8, pct: 12 },
-    { app: "Figma Desktop", exe: "Figma.exe", category: "Work", totalTime: "10h 30m", activeUsers: 4, pct: 10 },
-    { app: "Slack", exe: "slack.exe", category: "Work", totalTime: "8h 45m", activeUsers: 18, pct: 8 },
-    { app: "Spotify", exe: "Spotify.exe", category: "Restricted", totalTime: "2h 10m", activeUsers: 5, pct: 2 },
-  ];
+  const fleetAppUsage = useMemo(() => {
+    const appMap: Record<string, { seconds: number; exe: string; category: "Work" | "Neutral" | "Restricted"; users: Set<string> }> = {};
+    let totalSec = 0;
 
-  // Workstation Hardware Telemetry Dataset (Admin)
-  const workstationData = [
-    { hostname: "DESKTOP-AJAYP", user: "Ajay Pawar", os: "Windows 11 Pro 23H2", agent: "v1.0.0", queue: "0 pending", status: "Online", lastSync: "Just now" },
-    { hostname: "LAPTOP-PRIYA", user: "Priya Sharma", os: "Windows 11 Enterprise", agent: "v1.0.0", queue: "0 pending", status: "Online", lastSync: "1m ago" },
-    { hostname: "DESKTOP-RAJESH", user: "Rajesh Kulkarni", os: "Windows 11 Pro 23H2", agent: "v1.0.0", queue: "0 pending", status: "Online", lastSync: "Just now" },
-    { hostname: "LAPTOP-ANANYA", user: "Ananya Iyer", os: "Windows 10 Pro 22H2", agent: "v1.0.0", queue: "0 pending", status: "Idle", lastSync: "6m ago" },
-    { hostname: "LAPTOP-VIKRAM", user: "Vikram Malhotra", os: "Windows 11 Home", agent: "v1.0.0", queue: "0 pending", status: "Online", lastSync: "2m ago" },
-    { hostname: "DESKTOP-SNEHA", user: "Sneha Patil", os: "Windows 11 Pro 23H2", agent: "v1.0.0", queue: "0 pending", status: "Offline", lastSync: "2h ago" },
-  ];
+    liveLogs.forEach((l) => {
+      const app = l.executable || "System";
+      if (!appMap[app]) {
+        appMap[app] = {
+          seconds: 0,
+          exe: l.executable,
+          category: l.category === "work" ? "Work" : l.category === "restricted" ? "Restricted" : "Neutral",
+          users: new Set(),
+        };
+      }
+      appMap[app].seconds += l.durationSeconds || 0;
+      if (l.employeeEmail) appMap[app].users.add(l.employeeEmail);
+      totalSec += l.durationSeconds || 0;
+    });
+
+    return Object.entries(appMap)
+      .map(([app, d]) => ({
+        app,
+        exe: d.exe,
+        category: d.category,
+        totalTime: formatSecondsToDuration(d.seconds),
+        activeUsers: d.users.size || 1,
+        pct: totalSec > 0 ? Math.round((d.seconds / totalSec) * 100) : 0,
+      }))
+      .sort((a, b) => b.pct - a.pct);
+  }, [liveLogs]);
+
+  // Workstation Hardware Telemetry Dataset from liveDevices
+  const workstationData = useMemo(() => {
+    return liveDevices.map((d) => ({
+      hostname: d.hostname,
+      user: d.employeeName,
+      os: d.os,
+      agent: d.agentVersion,
+      queue: "0 pending",
+      status: d.online ? (d.status === "active" ? "Online" : "Idle") : "Offline",
+      lastSync: d.lastHeartbeat ? new Date(d.lastHeartbeat).toLocaleTimeString() : "Never",
+    }));
+  }, [liveDevices]);
 
   // Filtered Daily Records
   const filteredDailySummary = useMemo(() => {
@@ -590,12 +381,18 @@ export function ReportsPage() {
     }
   };
 
-  const handleSaveInactivityNote = () => {
+  const handleSaveInactivityNote = async () => {
     if (selectedRecordForNote && inactivityReason.trim()) {
-      setOfflineNotes((prev) => ({
-        ...prev,
-        [selectedRecordForNote.date]: inactivityReason.trim(),
-      }));
+      const summaryId = `${selectedRecordForNote.empId}_${selectedRecordForNote.date}`;
+      try {
+        await saveInactivityExplanation(
+          summaryId,
+          inactivityReason.trim(),
+          user?.email || ""
+        );
+      } catch (e) {
+        console.warn("Could not save note to Firestore:", e);
+      }
       setSelectedRecordForNote(null);
       setInactivityReason("");
     }

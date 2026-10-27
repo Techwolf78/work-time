@@ -1,0 +1,7 @@
+{
+  "env": "dev",
+  "email": "ajay@gryphonacademy.co.in",
+  "password": "",
+  "sampleCadenceSeconds": 5,
+  "flushCadenceSeconds": 30
+}
