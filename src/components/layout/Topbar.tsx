@@ -7,7 +7,6 @@ import {
   LogOut,
   User,
   Shield,
-  RotateCcw,
   ExternalLink,
   ChevronDown,
   Monitor,
@@ -302,41 +301,29 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
               </div>
 
               <div className="space-y-0.5">
-                {user?.employeeId && (
-                  <button
-                    onClick={() => {
-                      navigate(`/people/employees/${user.employeeId}`);
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-primary hover:bg-gray-100 transition-colors"
-                  >
-                    <User className="w-4 h-4 text-text-muted" />
-                    <span>My Profile</span>
-                  </button>
-                )}
-
                 <button
                   onClick={() => {
-                    navigate("/admin/settings");
+                    navigate("/profile");
                     setShowUserMenu(false);
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-primary hover:bg-gray-100 transition-colors"
                 >
-                  <Shield className="w-4 h-4 text-text-muted" />
-                  <span>Company Settings</span>
+                  <User className="w-4 h-4 text-text-muted" />
+                  <span>My Profile</span>
                 </button>
 
-                <button
-                  onClick={() => {
-                    if (window.confirm("Reset all LocalStorage data to fresh demo state?")) {
-                      resetAllData();
-                    }
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-amber-700 hover:bg-amber-50 transition-colors"
-                >
-                  <RotateCcw className="w-4 h-4 text-amber-600" />
-                  <span>Reset Demo Data</span>
-                </button>
+                {(user?.role === "SUPER_ADMIN" || user?.role === "HR_ADMIN") && (
+                  <button
+                    onClick={() => {
+                      navigate("/admin/settings");
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-primary hover:bg-gray-100 transition-colors"
+                  >
+                    <Shield className="w-4 h-4 text-text-muted" />
+                    <span>Company Settings</span>
+                  </button>
+                )}
 
                 <div className="my-1 border-t border-gray-100" />
 

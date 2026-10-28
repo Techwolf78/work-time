@@ -19,6 +19,7 @@ import { ReportsPage } from "./pages/reports/ReportsPage";
 import { UsersRolesPage } from "./pages/admin/UsersRolesPage";
 import { NotificationsPage } from "./pages/admin/NotificationsPage";
 import { AuditLogsPage } from "./pages/admin/AuditLogsPage";
+import { ProfilePage } from "./pages/profile/ProfilePage";
 
 import { UserRole } from "./types/hrms";
 
@@ -61,6 +62,7 @@ function MainAppContent() {
       >
           {/* Dashboard / Overview */}
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
 
           {/* People & Workstations (Real Staff Directory) */}
           <Route path="/people" element={<Navigate to="/people/employees" replace />} />
