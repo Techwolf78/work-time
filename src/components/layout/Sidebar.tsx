@@ -115,9 +115,6 @@ export function Sidebar({
           items: [
             { label: "My Activity", path: "/dashboard", icon: Activity, exact: true },
             { label: "My Timeline", path: "/time/timeline", icon: Clock },
-            { label: "App Usage", path: "/time/apps", icon: AppWindow },
-            { label: "Offline Review", path: "/time/inactivity", icon: Coffee },
-            { label: "My Reports", path: "/reports", icon: BarChart3 },
           ],
         },
       ];

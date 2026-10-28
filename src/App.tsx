@@ -76,16 +76,44 @@ function MainAppContent() {
           {/* Time Tracking & Desktop Activity Telemetry */}
           <Route path="/time" element={<Navigate to="/time/timeline" replace />} />
           <Route path="/time/timeline" element={<ActivityTimelinePage />} />
-          <Route path="/time/apps" element={<ApplicationUsagePage />} />
-          <Route path="/time/applications" element={<ApplicationUsagePage />} />
-          <Route path="/time/inactivity" element={<InactivityReviewPage />} />
+          <Route
+            path="/time/apps"
+            element={
+              <RoleRoute allowedRoles={["SUPER_ADMIN", "HR_ADMIN", "MANAGER"]}>
+                <ApplicationUsagePage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/time/applications"
+            element={
+              <RoleRoute allowedRoles={["SUPER_ADMIN", "HR_ADMIN", "MANAGER"]}>
+                <ApplicationUsagePage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/time/inactivity"
+            element={
+              <RoleRoute allowedRoles={["SUPER_ADMIN", "HR_ADMIN", "MANAGER"]}>
+                <InactivityReviewPage />
+              </RoleRoute>
+            }
+          />
           {/* Live presence redirects to consolidated People & Workstations directory */}
           <Route path="/time/live" element={<Navigate to="/people/employees" replace />} />
           <Route path="/team/live" element={<Navigate to="/people/employees" replace />} />
           <Route path="/devices" element={<Navigate to="/people/employees" replace />} />
 
           {/* Time Reports & CSV/Excel Exports */}
-          <Route path="/reports" element={<ReportsPage />} />
+          <Route
+            path="/reports"
+            element={
+              <RoleRoute allowedRoles={["SUPER_ADMIN", "HR_ADMIN", "MANAGER"]}>
+                <ReportsPage />
+              </RoleRoute>
+            }
+          />
 
           {/* Administration & Tracking Policies */}
           <Route
