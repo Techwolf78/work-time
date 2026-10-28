@@ -36,7 +36,7 @@ export const initialCompany: Company = {
   cin: "U72900PN2022PTC215689",
   gstin: "27AABCG1234F1Z8",
   pan: "AABCG1234F",
-  logo: "/brand/gryphon360-emblem-silver.png",
+  logo: "/app_icon.png",
   website: "https://gryphonacademy.co.in",
   phone: "+91 (020) 6745-9000",
   email: "info@gryphonacademy.co.in",

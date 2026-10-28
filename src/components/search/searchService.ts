@@ -14,6 +14,7 @@ import {
   FileText,
   User,
   Coffee,
+  Radio,
 } from "lucide-react";
 import {
   ISearchService,
@@ -316,11 +317,11 @@ export class ClientSearchService implements ISearchService {
         },
         {
           id: "dev-inventory",
-          title: "Workstation Fleet Inventory",
-          subtitle: "Enrolled laptops, OS builds, heartbeats, and queue health",
-          keywords: "workstations fleet inventory machines devices health",
-          path: "/devices",
-          badge: "Fleet View",
+          title: "Live Team Activity & Pulse",
+          subtitle: "Real-time workstation heartbeats, active tools, and employee presence",
+          keywords: "live pulse workstations fleet machines presence active",
+          path: "/time/live",
+          badge: "Live Telemetry",
         },
       ];
 
@@ -437,11 +438,11 @@ export class ClientSearchService implements ISearchService {
           icon: FileSpreadsheet,
         },
         {
-          title: "Workstation Fleet & Devices",
-          subtitle: "Devices > Enrolled Laptops & Agent Health",
-          keywords: "devices workstations fleet health laptops agent",
-          path: "/devices",
-          icon: Laptop,
+          title: "Live Team Activity & Pulse",
+          subtitle: "Workforce > Real-Time Status & Foreground Tools",
+          keywords: "live pulse devices workstations fleet presence",
+          path: "/time/live",
+          icon: Radio,
         },
         {
           title: "Tracking Policies & Rules",

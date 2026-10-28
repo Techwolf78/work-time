@@ -75,72 +75,14 @@ export const GaHrmsLogo: React.FC<GaHrmsLogoProps> = ({
         ? "text-gray-900"
         : "text-gray-900 dark:text-gray-200";
 
-  // Determine Emblem Asset
+  // Determine Emblem Asset - Always renders the approved Fluent 3D Hourglass app icon
   const renderEmblem = () => {
-    if (emblemType === "square") {
-      return (
-        <img
-          src="/favicon.png"
-          alt="GA"
-          className={`${sizeMap.squareIcon} object-cover shadow-sm`}
-        />
-      );
-    }
-
-    if (emblemType === "silver") {
-      return (
-        <img
-          src="/brand/gryphon360-emblem-silver.png"
-          alt="GA"
-          className={`${sizeMap.icon} object-contain`}
-        />
-      );
-    }
-
-    if (emblemType === "white") {
-      return (
-        <img
-          src="/ga-icon-white.png"
-          alt="GA"
-          className={`${sizeMap.icon} object-contain brightness-110 drop-shadow-[0_2px_8px_rgba(255,255,255,0.25)]`}
-        />
-      );
-    }
-
-    // Auto / Default based on variant
-    if (variant === "dark") {
-      return (
-        <img
-          src="/brand/gryphon360-emblem-silver.png"
-          alt="GA"
-          className={`${sizeMap.icon} object-contain brightness-110 drop-shadow-[0_2px_8px_rgba(255,255,255,0.2)]`}
-        />
-      );
-    }
-
-    if (variant === "light") {
-      return (
-        <img
-          src="/brand/gryphon360-emblem-silver.png"
-          alt="GA"
-          className={`${sizeMap.icon} object-contain`}
-        />
-      );
-    }
-
     return (
-      <>
-        <img
-          src="/brand/gryphon360-emblem-silver.png"
-          alt="GA"
-          className={`${sizeMap.icon} object-contain dark:hidden`}
-        />
-        <img
-          src="/brand/gryphon360-emblem-silver.png"
-          alt="GA"
-          className={`${sizeMap.icon} object-contain hidden dark:block brightness-110 drop-shadow-[0_2px_8px_rgba(255,255,255,0.2)]`}
-        />
-      </>
+      <img
+        src="/app_icon.png"
+        alt="GA WORK-TIME"
+        className={`${sizeMap.squareIcon || sizeMap.icon} object-contain rounded-lg drop-shadow-sm`}
+      />
     );
   };
 

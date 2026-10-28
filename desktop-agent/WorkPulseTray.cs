@@ -21,11 +21,24 @@ using System.Reflection;
 
 namespace GaWorkTime {
     public class Program {
+        private static System.Threading.Mutex singleMutex = null;
+
         [STAThread]
         public static void Main(string[] args) {
+            try {
+                bool isNewInstance = false;
+                singleMutex = new System.Threading.Mutex(true, "GA_Work_Time_Unique_Agent_Mutex", out isNewInstance);
+                if (!isNewInstance) {
+                    return;
+                }
+            } catch { }
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new GaWorkTimeMainWindow(args));
+            if (singleMutex != null) {
+                GC.KeepAlive(singleMutex);
+            }
         }
     }
 
@@ -73,7 +86,6 @@ namespace GaWorkTime {
         private Label activeTitleLabel;
         private Label appDurationLabel;
         private Label focusScoreLabel;
-        private Button pauseButton;
         private Button dashboardButton;
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
@@ -92,7 +104,6 @@ namespace GaWorkTime {
         private string currentApp = "System";
         private string currentWindowTitle = "";
         private string currentState = "ACTIVE";
-        private bool isPaused = false;
         private DateTime appStartTime = DateTime.UtcNow;
         private DateTime intervalStartTime = DateTime.UtcNow;
         private int totalActiveSeconds = 0;
@@ -100,6 +111,7 @@ namespace GaWorkTime {
         private DateTime lastFlushTime = DateTime.UtcNow;
         private static readonly HttpClient httpClient = new HttpClient();
         private string pendingUpdateUrl = "";
+        private bool isSessionLocked = false;
 
         public GaWorkTimeMainWindow(string[] args) {
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -128,14 +140,27 @@ namespace GaWorkTime {
 
             StartTimers();
             CheckForUpdatesAsync();
+
+            try {
+                Microsoft.Win32.SystemEvents.SessionSwitch += (s, e) => {
+                    if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionLock) {
+                        isSessionLocked = true;
+                        currentState = "LOCKED";
+                    } else if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock) {
+                        isSessionLocked = false;
+                        currentState = "ACTIVE";
+                    }
+                };
+            } catch { }
         }
 
         private void InitializeComponent() {
             this.Text = "GA WORK-TIME";
-            this.Size = new Size(460, 640);
+            this.Size = new Size(460, 560);
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(248, 249, 251);
+            this.ShowInTaskbar = true;
             this.Icon = CreatePulseIcon();
 
             // 1. Sleek Dark Header Panel (Draggable)
@@ -333,22 +358,8 @@ namespace GaWorkTime {
             activityCard.Controls.Add(activeAppLabel);
             activityCard.Controls.Add(activeTitleLabel);
 
-            // Employee Controls (Pause / Break Button)
-            pauseButton = new Button() {
-                Text = "⏸  Take a Break / Pause Tracking",
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 41, 59),
-                BackColor = Color.FromArgb(241, 245, 249),
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(408, 42),
-                Location = new Point(18, 312),
-                Cursor = Cursors.Hand
-            };
-            pauseButton.FlatAppearance.BorderColor = Color.FromArgb(226, 232, 240);
-            pauseButton.Click += (s, e) => { TogglePause(); };
-
             // User Info & Status Card
-            Panel userCard = CreateCardPanel(18, 368, 408, 110);
+            Panel userCard = CreateCardPanel(18, 312, 408, 110);
             
             Label userTitle = new Label() {
                 Text = "WORKSTATION PROFILE",
@@ -380,7 +391,7 @@ namespace GaWorkTime {
                 BackColor = Color.FromArgb(15, 23, 42),
                 FlatStyle = FlatStyle.Flat,
                 Size = new Size(408, 42),
-                Location = new Point(18, 492),
+                Location = new Point(18, 436),
                 Cursor = Cursors.Hand
             };
             dashboardButton.FlatAppearance.BorderSize = 0;
@@ -390,7 +401,6 @@ namespace GaWorkTime {
 
             contentPanel.Controls.Add(timerCard);
             contentPanel.Controls.Add(activityCard);
-            contentPanel.Controls.Add(pauseButton);
             contentPanel.Controls.Add(userCard);
             contentPanel.Controls.Add(dashboardButton);
 
@@ -413,34 +423,15 @@ namespace GaWorkTime {
             return panel;
         }
 
-        private void TogglePause() {
-            isPaused = !isPaused;
-            if (isPaused) {
-                currentState = "PAUSED";
-                pauseButton.Text = "▶  Resume Work Tracking";
-                pauseButton.BackColor = Color.FromArgb(236, 253, 245);
-                pauseButton.ForeColor = Color.FromArgb(5, 150, 105);
-                statusBadgeLabel.Text = "⏸ PAUSED";
-                statusBadgeLabel.ForeColor = Color.FromArgb(217, 119, 6);
-                statusBadgeLabel.BackColor = Color.FromArgb(254, 243, 199);
-            } else {
-                currentState = "ACTIVE";
-                pauseButton.Text = "⏸  Take a Break / Pause Tracking";
-                pauseButton.BackColor = Color.FromArgb(241, 245, 249);
-                pauseButton.ForeColor = Color.FromArgb(30, 41, 59);
-                statusBadgeLabel.Text = "● ACTIVE";
-                statusBadgeLabel.ForeColor = Color.FromArgb(16, 185, 129);
-                statusBadgeLabel.BackColor = Color.FromArgb(236, 253, 245);
-            }
-        }
-
         private void StartTimers() {
             // 1. Live second timer (updates UI clocks smoothly every 1000ms)
             secondTimer = new Timer();
             secondTimer.Interval = 1000;
             secondTimer.Tick += (s, e) => {
-                if (!isPaused && currentState == "ACTIVE") {
+                if (currentState == "ACTIVE") {
                     totalActiveSeconds++;
+                } else {
+                    totalIdleSeconds++;
                 }
 
                 int h = totalActiveSeconds / 3600;
@@ -476,10 +467,6 @@ namespace GaWorkTime {
         }
 
         private async Task SampleAndSyncTelemetry() {
-            if (isPaused) {
-                currentState = "PAUSED";
-                return;
-            }
 
             // 1. Idle detection via GetLastInputInfo
             LASTINPUTINFO lii = new LASTINPUTINFO();
@@ -492,7 +479,6 @@ namespace GaWorkTime {
 
             double idleSeconds = idleTicks / 1000.0;
             bool isIdle = idleSeconds >= 300.0; // 5 min idle threshold
-            string newState = isIdle ? "IDLE" : "ACTIVE";
 
             // 2. Foreground Window detection
             IntPtr fgHwnd = GetForegroundWindow();
@@ -512,16 +498,41 @@ namespace GaWorkTime {
                 } catch { }
             }
 
+            // Smooth transition guard: if foreground window is momentarily 0 while user is actively working, preserve current active app
+            if ((fgHwnd == IntPtr.Zero || string.IsNullOrEmpty(detectedTitle)) && !isIdle && !isSessionLocked && !string.IsNullOrEmpty(currentApp) && currentApp != "System" && currentApp != "LockApp") {
+                detectedApp = currentApp;
+                if (!string.IsNullOrEmpty(currentWindowTitle)) {
+                    detectedTitle = currentWindowTitle;
+                }
+            }
+
+            bool isLocked = isSessionLocked ||
+                            string.Equals(detectedApp, "LockApp", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(detectedApp, "LogonUI", StringComparison.OrdinalIgnoreCase) ||
+                            detectedTitle.IndexOf("Lock Screen", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            string newState = isLocked ? "LOCKED" : (isIdle ? "IDLE" : "ACTIVE");
+
+            if (isLocked) {
+                detectedApp = "LockApp";
+                detectedTitle = "Screen Locked / Break";
+            }
+
             // Update UI state
             if (detectedApp != currentApp) {
                 currentApp = detectedApp;
                 appStartTime = DateTime.UtcNow;
                 activeAppLabel.Text = currentApp;
             }
-            activeTitleLabel.Text = string.IsNullOrEmpty(detectedTitle) ? "Idle / Desktop" : detectedTitle;
+            activeTitleLabel.Text = string.IsNullOrEmpty(detectedTitle) ? (isLocked ? "Screen Locked / Break" : "Idle / Desktop") : detectedTitle;
+            currentWindowTitle = activeTitleLabel.Text;
 
             currentState = newState;
-            if (isIdle) {
+            if (isLocked) {
+                statusBadgeLabel.Text = "● LOCKED";
+                statusBadgeLabel.ForeColor = Color.FromArgb(168, 85, 247);
+                statusBadgeLabel.BackColor = Color.FromArgb(250, 245, 255);
+            } else if (isIdle) {
                 totalIdleSeconds += 5;
                 statusBadgeLabel.Text = "● IDLE";
                 statusBadgeLabel.ForeColor = Color.FromArgb(217, 119, 6);
@@ -571,6 +582,7 @@ namespace GaWorkTime {
             try {
                 string logId = "log_" + DateTime.UtcNow.Ticks;
                 string url = FIRESTORE_BASE + "timetrack_activity_logs/" + logId;
+                string cat = (currentState == "LOCKED") ? "neutral" : "work";
 
                 string json = "{\n  \"fields\": {\n" +
                     "    \"id\": {\"stringValue\": \"" + logId + "\"},\n" +
@@ -580,9 +592,10 @@ namespace GaWorkTime {
                     "    \"deviceId\": {\"stringValue\": \"" + EscapeJson(Environment.MachineName) + "\"},\n" +
                     "    \"application\": {\"stringValue\": \"" + EscapeJson(currentApp) + "\"},\n" +
                     "    \"windowTitle\": {\"stringValue\": \"" + EscapeJson(currentWindowTitle) + "\"},\n" +
-                    "    \"state\": {\"stringValue\": \"" + EscapeJson(currentState) + "\"},\n" +
+                    "    \"state\": {\"stringValue\": \"" + EscapeJson(currentState.ToLower()) + "\"},\n" +
+                    "    \"category\": {\"stringValue\": \"" + cat + "\"},\n" +
                     "    \"durationSeconds\": {\"integerValue\": \"15\"},\n" +
-                    "    \"date\": {\"stringValue\": \"" + DateTime.UtcNow.ToString("yyyy-MM-dd") + "\"},\n" +
+                    "    \"date\": {\"stringValue\": \"" + DateTime.Now.ToString("yyyy-MM-dd") + "\"},\n" +
                     "    \"startTime\": {\"timestampValue\": \"" + DateTime.UtcNow.AddSeconds(-15).ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + "\"},\n" +
                     "    \"endTime\": {\"timestampValue\": \"" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") + "\"}\n" +
                     "  }\n}";
@@ -713,13 +726,30 @@ namespace GaWorkTime {
         }
 
         private Icon CreatePulseIcon() {
-            Bitmap bmp = new Bitmap(16, 16);
-            using (Graphics g = Graphics.FromImage(bmp)) {
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.FillEllipse(new SolidBrush(Color.FromArgb(16, 185, 129)), 1, 1, 14, 14);
-                g.FillEllipse(new SolidBrush(Color.White), 5, 5, 6, 6);
-            }
-            return Icon.FromHandle(bmp.GetHicon());
+            try {
+                string appDir = AppDomain.CurrentDomain.BaseDirectory;
+                string[] candidates = new string[] {
+                    Path.Combine(appDir, "app.ico"),
+                    Path.Combine(appDir, "downloads", "app.ico"),
+                    @"C:\Users\AjayPawar\Desktop\code\ga-work-time\public\downloads\app.ico",
+                    @"C:\Users\AjayPawar\Desktop\code\ga-work-time\desktop-agent\app.ico"
+                };
+                foreach (string c in candidates) {
+                    if (File.Exists(c)) {
+                        return new Icon(c);
+                    }
+                }
+            } catch { }
+
+            try {
+                // Try extracting associated high-res icon from executable header
+                Icon exeIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+                if (exeIcon != null) {
+                    return exeIcon;
+                }
+            } catch { }
+
+            return null;
         }
 
         private void ShowSetupDialog() {

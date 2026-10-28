@@ -13,8 +13,6 @@ import { EmployeesPage } from "./pages/people/EmployeesPage";
 import { ActivityTimelinePage } from "./pages/time/ActivityTimelinePage";
 import { ApplicationUsagePage } from "./pages/time/ApplicationUsagePage";
 import { InactivityReviewPage } from "./pages/time/InactivityReviewPage";
-import { TeamLiveActivityPage } from "./pages/time/TeamLiveActivityPage";
-import { DeviceHealthPage } from "./pages/devices/DeviceHealthPage";
 import { TrackingPoliciesPage } from "./pages/admin/TrackingPoliciesPage";
 import { SettingsPage } from "./pages/admin/SettingsPage";
 import { ReportsPage } from "./pages/reports/ReportsPage";
@@ -81,25 +79,10 @@ function MainAppContent() {
           <Route path="/time/apps" element={<ApplicationUsagePage />} />
           <Route path="/time/applications" element={<ApplicationUsagePage />} />
           <Route path="/time/inactivity" element={<InactivityReviewPage />} />
-          <Route
-            path="/time/live"
-            element={
-              <RoleRoute allowedRoles={["SUPER_ADMIN", "HR_ADMIN", "MANAGER"]}>
-                <TeamLiveActivityPage />
-              </RoleRoute>
-            }
-          />
-          <Route
-            path="/team/live"
-            element={
-              <RoleRoute allowedRoles={["SUPER_ADMIN", "HR_ADMIN", "MANAGER"]}>
-                <TeamLiveActivityPage />
-              </RoleRoute>
-            }
-          />
-
-          {/* Workstation Fleet & Enrolled Devices */}
-          <Route path="/devices" element={<DeviceHealthPage />} />
+          {/* Live presence redirects to consolidated People & Workstations directory */}
+          <Route path="/time/live" element={<Navigate to="/people/employees" replace />} />
+          <Route path="/team/live" element={<Navigate to="/people/employees" replace />} />
+          <Route path="/devices" element={<Navigate to="/people/employees" replace />} />
 
           {/* Time Reports & CSV/Excel Exports */}
           <Route path="/reports" element={<ReportsPage />} />
@@ -155,7 +138,7 @@ function MainAppContent() {
           <Route path="/leave/*" element={<Navigate to="/dashboard" replace />} />
           <Route path="/payroll/*" element={<Navigate to="/reports" replace />} />
           <Route path="/recruitment" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/assets" element={<Navigate to="/devices" replace />} />
+          <Route path="/assets" element={<Navigate to="/time/live" replace />} />
           <Route path="/performance" element={<Navigate to="/dashboard" replace />} />
           <Route path="/onboarding/*" element={<Navigate to="/dashboard" replace />} />
           <Route path="/people/departments" element={<Navigate to="/people/employees" replace />} />

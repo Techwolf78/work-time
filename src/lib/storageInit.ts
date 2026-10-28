@@ -159,5 +159,11 @@ export function initializeHrmsStorage(forceReset = false) {
         storage.set(STORAGE_KEYS.USER, { ...currentUser, avatar: "/avatars/superman.jpg" });
       }
     }
+
+    // Migration guard: ensure company logo uses /app_icon.png
+    const currentCompany = storage.get<any>(STORAGE_KEYS.COMPANY, null);
+    if (currentCompany && currentCompany.logo !== "/app_icon.png") {
+      storage.set(STORAGE_KEYS.COMPANY, { ...currentCompany, logo: "/app_icon.png" });
+    }
   }
 }

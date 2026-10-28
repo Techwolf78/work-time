@@ -7,10 +7,12 @@ import {
   Clock,
   BarChart3,
   Activity,
-  Laptop,
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
+  AppWindow,
+  Coffee,
+  Sliders,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../lib/authContext";
@@ -21,6 +23,13 @@ export interface NavItem {
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+  exact?: boolean;
+}
+
+export interface NavSection {
+  title?: string;
+  items: NavItem[];
 }
 
 export interface SidebarProps {
@@ -44,28 +53,73 @@ export function Sidebar({
   const isSuperAdmin = role === "SUPER_ADMIN" || role === "HR_ADMIN";
   const isManager = role === "MANAGER";
 
-  // GA WORK-TIME Focused Navigation Hierarchy
-  const navItems: NavItem[] = isSuperAdmin
+  // GA WORK-TIME Focused Navigation Hierarchy with grouped sections
+  const navSections: NavSection[] = isSuperAdmin
     ? [
-        { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
-        { label: "People", path: "/people/employees", icon: Users },
-        { label: "Time Tracking", path: "/time/timeline", icon: Clock },
-        { label: "Workstations", path: "/devices", icon: Laptop },
-        { label: "Reports", path: "/reports", icon: BarChart3 },
-        { label: "Settings", path: "/admin/settings", icon: Settings },
+        {
+          title: "Dashboard",
+          items: [
+            { label: "Overview", path: "/dashboard", icon: LayoutDashboard, exact: true },
+          ],
+        },
+        {
+          title: "Time & Telemetry",
+          items: [
+            { label: "Timeline", path: "/time/timeline", icon: Clock },
+            { label: "App Usage", path: "/time/apps", icon: AppWindow },
+            { label: "Inactivity Review", path: "/time/inactivity", icon: Coffee },
+          ],
+        },
+        {
+          title: "Workforce & Reports",
+          items: [
+            { label: "People & Workstations", path: "/people/employees", icon: Users },
+            { label: "Reports", path: "/reports", icon: BarChart3 },
+          ],
+        },
+        {
+          title: "Administration",
+          items: [
+            { label: "Tracking Policies", path: "/admin/policies", icon: Sliders },
+            { label: "Settings", path: "/admin/settings", icon: Settings },
+          ],
+        },
       ]
     : isManager
     ? [
-        { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
-        { label: "My Team", path: "/people/employees", icon: Users },
-        { label: "Time Tracking", path: "/time/timeline", icon: Clock },
-        { label: "Workstations", path: "/devices", icon: Laptop },
-        { label: "Reports", path: "/reports", icon: BarChart3 },
+        {
+          title: "Dashboard",
+          items: [
+            { label: "Overview", path: "/dashboard", icon: LayoutDashboard, exact: true },
+          ],
+        },
+        {
+          title: "Time & Telemetry",
+          items: [
+            { label: "Team Timeline", path: "/time/timeline", icon: Clock },
+            { label: "App Usage", path: "/time/apps", icon: AppWindow },
+            { label: "Inactivity Review", path: "/time/inactivity", icon: Coffee },
+          ],
+        },
+        {
+          title: "Workforce & Reports",
+          items: [
+            { label: "My Team", path: "/people/employees", icon: Users },
+            { label: "Reports", path: "/reports", icon: BarChart3 },
+          ],
+        },
       ]
     : [
-        { label: "My Activity", path: "/dashboard", icon: Activity },
-        { label: "Time Tracking", path: "/time/timeline", icon: Clock },
-        { label: "My Reports", path: "/reports", icon: BarChart3 },
+        {
+          title: "Personal Workspace",
+          items: [
+            { label: "My Activity", path: "/dashboard", icon: Activity, exact: true },
+            { label: "My Timeline", path: "/time/timeline", icon: Clock },
+            { label: "App Usage", path: "/time/apps", icon: AppWindow },
+            { label: "Offline Review", path: "/time/inactivity", icon: Coffee },
+            { label: "My Reports", path: "/reports", icon: BarChart3 },
+          ],
+        },
       ];
 
   const getRoleDisplayName = () => {
@@ -128,44 +182,59 @@ export function Sidebar({
         </div>
       )}
 
-      {/* Navigation Menu (iOS-Clarity Minimal List) */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-        {!collapsed && (
-          <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
-            {getRoleDisplayName()} Navigation
-          </p>
-        )}
+      {/* Navigation Menu with Grouped Sections */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+        {navSections.map((section, idx) => (
+          <div key={idx} className="space-y-1">
+            {!collapsed && section.title && (
+              <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                {section.title}
+              </p>
+            )}
 
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            location.pathname === item.path ||
-            (item.path !== "/dashboard" && location.pathname.startsWith(item.path));
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.exact
+                ? location.pathname === item.path
+                : location.pathname === item.path ||
+                  (item.path !== "/dashboard" &&
+                    location.pathname.startsWith(item.path + "/"));
 
-          return (
-            <NavLink
-              key={item.label}
-              to={item.path}
-              onClick={onCloseMobile}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                "flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all duration-150 group relative",
-                collapsed ? "justify-center h-10 w-10 mx-auto px-0" : "px-3 py-2",
-                isActive
-                  ? "bg-white text-gray-950 font-semibold shadow-xs"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              )}
-            >
-              <Icon
-                className={cn(
-                  "w-4 h-4 shrink-0 transition-colors",
-                  isActive ? "text-gray-950" : "text-gray-400 group-hover:text-white"
-                )}
-              />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </NavLink>
-          );
-        })}
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={onCloseMobile}
+                  title={collapsed ? item.label : undefined}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all duration-150 group relative",
+                    collapsed ? "justify-center h-10 w-10 mx-auto px-0" : "px-3 py-2",
+                    isActive
+                      ? "bg-white text-gray-950 font-semibold shadow-xs"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-4 h-4 shrink-0 transition-colors",
+                      isActive ? "text-gray-950" : "text-gray-400 group-hover:text-white"
+                    )}
+                  />
+                  {!collapsed && (
+                    <div className="flex items-center justify-between flex-1 truncate">
+                      <span className="truncate">{item.label}</span>
+                      {item.badge && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* User / Agent Status Footer */}
@@ -220,23 +289,18 @@ export function Sidebar({
         {sidebarContent}
       </aside>
 
-      {/* Mobile Drawer Backdrop */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs md:hidden"
-          onClick={onCloseMobile}
-        />
-      )}
-
       {/* Mobile Drawer */}
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-60 transition-transform duration-300 md:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        {sidebarContent}
-      </div>
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={onCloseMobile}
+          />
+          <div className="relative w-64 max-w-[80vw] h-full bg-gray-950 shadow-2xl z-10">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
     </>
   );
 }
