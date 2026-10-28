@@ -148,6 +148,7 @@ namespace GaWorkTime {
         private string userEmail = "";
         private string userName = "";
         private string userDept = "Operations";
+        private Label userDetailsLabel;
         private string currentApp = "System";
         private string currentWindowTitle = "";
         private string currentState = "ACTIVE";
@@ -415,19 +416,34 @@ namespace GaWorkTime {
                 AutoSize = true
             };
 
-            Label userDetails = new Label() {
-                Text = (string.IsNullOrEmpty(userName) ? "Employee" : userName) + " (" + userEmail + ")\n" +
-                       "Computer: " + Environment.MachineName + " • " + Environment.OSVersion.VersionString + "\n" +
-                       "Company: Gryphon Academy Pvt. Ltd.",
+            Button switchAccountBtn = new Button() {
+                Text = "Switch Account ✎",
+                Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(79, 70, 229),
+                BackColor = Color.FromArgb(238, 242, 255),
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(115, 24),
+                Location = new Point(275, 8),
+                Cursor = Cursors.Hand
+            };
+            switchAccountBtn.FlatAppearance.BorderSize = 0;
+            switchAccountBtn.Click += (s, e) => {
+                ShowSetupDialog();
+                UpdateProfileDisplay();
+            };
+
+            userDetailsLabel = new Label() {
+                Text = GetProfileDetailsText(),
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
                 ForeColor = Color.FromArgb(51, 65, 85),
-                Location = new Point(16, 36),
+                Location = new Point(16, 38),
                 Width = 376,
                 Height = 60
             };
 
             userCard.Controls.Add(userTitle);
-            userCard.Controls.Add(userDetails);
+            userCard.Controls.Add(switchAccountBtn);
+            userCard.Controls.Add(userDetailsLabel);
 
             // Open Dashboard Button
             dashboardButton = new Button() {
@@ -744,6 +760,7 @@ namespace GaWorkTime {
             });
             ToolStripMenuItem reconfigItem = new ToolStripMenuItem("Re-pair Account...", null, (s, e) => {
                 ShowSetupDialog();
+                UpdateProfileDisplay();
             });
             ToolStripMenuItem exitItem = new ToolStripMenuItem("Exit GA WORK-TIME", null, (s, e) => {
                 trayIcon.Visible = false;
@@ -801,10 +818,108 @@ namespace GaWorkTime {
             return null;
         }
 
+        private string GetProfileDetailsText() {
+            return (string.IsNullOrEmpty(userName) ? "Employee" : userName) + " (" + (string.IsNullOrEmpty(userEmail) ? "Unlinked" : userEmail) + ")\n" +
+                   "Department: " + (string.IsNullOrEmpty(userDept) ? "Operations" : userDept) + " • PC: " + Environment.MachineName + "\n" +
+                   "Company: Gryphon Academy Pvt. Ltd.";
+        }
+
+        private void UpdateProfileDisplay() {
+            try {
+                if (userDetailsLabel != null) {
+                    userDetailsLabel.Text = GetProfileDetailsText();
+                }
+            } catch { }
+        }
+
+        public class CrmStaffInfo {
+            public string Email;
+            public string Name;
+            public string Department;
+            public bool IsActive;
+        }
+
+        private async Task<CrmStaffInfo> VerifyCrmEmployeeAsync(string inputEmail) {
+            if (string.IsNullOrEmpty(inputEmail)) return null;
+            string target = inputEmail.Trim().ToLowerInvariant();
+
+            try {
+                string url = FIRESTORE_BASE + "users?pageSize=100";
+                HttpResponseMessage resp = await httpClient.GetAsync(url);
+                if (!resp.IsSuccessStatusCode) return null;
+
+                string json = await resp.Content.ReadAsStringAsync();
+
+                int docIdx = 0;
+                while ((docIdx = json.IndexOf("\"fields\":", docIdx)) != -1) {
+                    int blockEnd = json.IndexOf("\"createTime\":", docIdx);
+                    if (blockEnd == -1) blockEnd = json.Length;
+                    string block = json.Substring(docIdx, blockEnd - docIdx);
+
+                    string emailVal = ExtractFirestoreField(block, "email");
+                    if (!string.IsNullOrEmpty(emailVal) && emailVal.Trim().ToLowerInvariant() == target) {
+                        string nameVal = ExtractFirestoreField(block, "name");
+                        if (string.IsNullOrEmpty(nameVal)) {
+                            nameVal = ExtractFirestoreField(block, "displayName");
+                        }
+                        string deptVal = ExtractFirestoreField(block, "department");
+                        if (string.IsNullOrEmpty(deptVal)) {
+                            deptVal = ExtractFirestoreArrayFirst(block, "departments");
+                        }
+                        if (string.IsNullOrEmpty(deptVal)) deptVal = "Operations";
+
+                        bool isActive = true;
+                        int actIdx = block.IndexOf("\"isActive\":");
+                        if (actIdx != -1) {
+                            int bIdx = block.IndexOf("\"booleanValue\":", actIdx);
+                            if (bIdx != -1 && bIdx - actIdx < 40) {
+                                string sub = block.Substring(bIdx + 15, Math.Min(10, block.Length - (bIdx + 15))).ToLowerInvariant();
+                                if (sub.StartsWith("false")) isActive = false;
+                            }
+                        }
+
+                        CrmStaffInfo staff = new CrmStaffInfo();
+                        staff.Email = emailVal.Trim().ToLowerInvariant();
+                        staff.Name = string.IsNullOrEmpty(nameVal) ? staff.Email.Split('@')[0] : nameVal.Trim();
+                        staff.Department = deptVal.Trim();
+                        staff.IsActive = isActive;
+                        return staff;
+                    }
+                    docIdx = blockEnd;
+                }
+            } catch { }
+
+            return null;
+        }
+
+        private static string ExtractFirestoreField(string block, string key) {
+            int keyIdx = block.IndexOf("\"" + key + "\":");
+            if (keyIdx == -1) return "";
+            int strValIdx = block.IndexOf("\"stringValue\":", keyIdx);
+            if (strValIdx == -1 || strValIdx - keyIdx > 120) return "";
+            int startQuote = block.IndexOf('"', strValIdx + 14);
+            if (startQuote == -1) return "";
+            int endQuote = block.IndexOf('"', startQuote + 1);
+            if (endQuote == -1) return "";
+            return block.Substring(startQuote + 1, endQuote - startQuote - 1);
+        }
+
+        private static string ExtractFirestoreArrayFirst(string block, string key) {
+            int keyIdx = block.IndexOf("\"" + key + "\":");
+            if (keyIdx == -1) return "";
+            int strValIdx = block.IndexOf("\"stringValue\":", keyIdx);
+            if (strValIdx == -1 || strValIdx - keyIdx > 200) return "";
+            int startQuote = block.IndexOf('"', strValIdx + 14);
+            if (startQuote == -1) return "";
+            int endQuote = block.IndexOf('"', startQuote + 1);
+            if (endQuote == -1) return "";
+            return block.Substring(startQuote + 1, endQuote - startQuote - 1);
+        }
+
         private void ShowSetupDialog() {
             using (Form form = new Form()) {
                 form.Text = "GA WORK-TIME • Workstation Setup";
-                form.Size = new Size(420, 260);
+                form.Size = new Size(440, 310);
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
                 form.StartPosition = FormStartPosition.CenterScreen;
                 form.MaximizeBox = false;
@@ -815,54 +930,110 @@ namespace GaWorkTime {
                     Text = "Link Workstation",
                     Font = new Font("Segoe UI", 12, FontStyle.Bold),
                     ForeColor = Color.FromArgb(15, 23, 42),
-                    Location = new Point(24, 20),
+                    Location = new Point(24, 18),
                     AutoSize = true
                 };
 
                 Label desc = new Label() {
-                    Text = "Enter your work email once to link this computer (" + Environment.MachineName + ").",
+                    Text = "Enter your official work email (@gryphonacademy.co.in) to link this computer (" + Environment.MachineName + ").",
                     Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
                     ForeColor = Color.FromArgb(100, 116, 139),
-                    Location = new Point(24, 48),
-                    Width = 356,
-                    Height = 35
+                    Location = new Point(24, 46),
+                    Width = 376,
+                    Height = 34
                 };
 
                 Label emailLbl = new Label() {
                     Text = "Corporate Email Address:",
                     Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
                     ForeColor = Color.FromArgb(51, 65, 85),
-                    Location = new Point(24, 90),
+                    Location = new Point(24, 88),
                     AutoSize = true
                 };
 
                 TextBox emailBox = new TextBox() {
                     Text = userEmail,
                     Font = new Font("Segoe UI", 10),
-                    Location = new Point(24, 112),
-                    Width = 356
+                    Location = new Point(24, 110),
+                    Width = 376
+                };
+
+                Label statusMsgLabel = new Label() {
+                    Text = "",
+                    Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
+                    ForeColor = Color.FromArgb(220, 38, 38),
+                    Location = new Point(24, 140),
+                    Width = 376,
+                    Height = 32,
+                    Visible = false
                 };
 
                 Button pairBtn = new Button() {
-                    Text = "Pair Workstation & Start",
+                    Text = "Verify & Pair Workstation",
                     Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                     ForeColor = Color.White,
                     BackColor = Color.FromArgb(15, 23, 42),
                     FlatStyle = FlatStyle.Flat,
-                    Size = new Size(356, 38),
-                    Location = new Point(24, 155),
+                    Size = new Size(376, 38),
+                    Location = new Point(24, 178),
                     Cursor = Cursors.Hand
                 };
                 pairBtn.FlatAppearance.BorderSize = 0;
-                pairBtn.Click += (s, e) => {
+
+                pairBtn.Click += async (s, e) => {
                     string email = emailBox.Text.Trim();
                     if (string.IsNullOrEmpty(email) || !email.Contains("@")) {
-                        MessageBox.Show(form, "Please enter a valid work email address.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        statusMsgLabel.Text = "Please enter a valid corporate email address.";
+                        statusMsgLabel.ForeColor = Color.FromArgb(220, 38, 38);
+                        statusMsgLabel.Visible = true;
                         return;
                     }
-                    userEmail = email.ToLower();
-                    userName = userEmail.Split('@')[0];
+
+                    if (!email.ToLowerInvariant().EndsWith("@gryphonacademy.co.in")) {
+                        statusMsgLabel.Text = "Must be an official company email ending with @gryphonacademy.co.in";
+                        statusMsgLabel.ForeColor = Color.FromArgb(220, 38, 38);
+                        statusMsgLabel.Visible = true;
+                        return;
+                    }
+
+                    statusMsgLabel.Text = "Verifying email against Gryphon Academy employee registry...";
+                    statusMsgLabel.ForeColor = Color.FromArgb(79, 70, 229);
+                    statusMsgLabel.Visible = true;
+                    pairBtn.Enabled = false;
+                    emailBox.Enabled = false;
+
+                    CrmStaffInfo staff = await VerifyCrmEmployeeAsync(email);
+
+                    if (staff == null) {
+                        statusMsgLabel.Text = "Email not found in employee registry! Check for spelling mistakes.";
+                        statusMsgLabel.ForeColor = Color.FromArgb(220, 38, 38);
+                        statusMsgLabel.Visible = true;
+                        pairBtn.Enabled = true;
+                        emailBox.Enabled = true;
+                        emailBox.Focus();
+                        return;
+                    }
+
+                    if (!staff.IsActive) {
+                        statusMsgLabel.Text = "This employee account is marked inactive in HRMS. Contact HR.";
+                        statusMsgLabel.ForeColor = Color.FromArgb(220, 38, 38);
+                        statusMsgLabel.Visible = true;
+                        pairBtn.Enabled = true;
+                        emailBox.Enabled = true;
+                        return;
+                    }
+
+                    // Success!
+                    userEmail = staff.Email;
+                    userName = staff.Name;
+                    userDept = staff.Department;
                     SaveConfiguration();
+
+                    statusMsgLabel.Text = "✓ Verified: " + staff.Name + " (" + staff.Department + ") - Linked!";
+                    statusMsgLabel.ForeColor = Color.FromArgb(16, 185, 129);
+                    statusMsgLabel.Visible = true;
+
+                    await Task.Delay(750);
                     form.DialogResult = DialogResult.OK;
                     form.Close();
                 };
@@ -871,6 +1042,7 @@ namespace GaWorkTime {
                 form.Controls.Add(desc);
                 form.Controls.Add(emailLbl);
                 form.Controls.Add(emailBox);
+                form.Controls.Add(statusMsgLabel);
                 form.Controls.Add(pairBtn);
 
                 if (form.ShowDialog() != DialogResult.OK && string.IsNullOrEmpty(userEmail)) {
