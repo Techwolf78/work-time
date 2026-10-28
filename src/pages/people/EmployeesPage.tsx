@@ -35,13 +35,18 @@ import {
   CrmEmployeeSummary,
   TelemetryDevice,
 } from "../../lib/telemetryService";
+import { useRbacScope } from "../../lib/rbacScope";
 
 export function EmployeesPage() {
   const { employees, departments } = useHrms();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const isManager = user?.role === "MANAGER";
+  // Real-time Firestore state
+  const [crmStaff, setCrmStaff] = useState<CrmEmployeeSummary[]>([]);
+  const [devices, setDevices] = useState<TelemetryDevice[]>([]);
+
+  const { isManager, isSuperAdmin, isEmployee, scopedStaff, scopedDevices } = useRbacScope(crmStaff, devices);
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,10 +56,6 @@ export function EmployeesPage() {
   const [timeFilter, setTimeFilter] = useState<"ALL" | "HAS_TIME" | "ZERO_TIME">("ALL");
   const [selectedApp, setSelectedApp] = useState("ALL");
   const [sortBy, setSortBy] = useState<"ACTIVE_FIRST" | "TIME_DESC" | "NAME_ASC" | "DEPT_ASC">("ACTIVE_FIRST");
-
-  // Real-time Firestore state
-  const [crmStaff, setCrmStaff] = useState<CrmEmployeeSummary[]>([]);
-  const [devices, setDevices] = useState<TelemetryDevice[]>([]);
 
   useEffect(() => {
     fetchCrmEmployees().then((staff) => {
@@ -68,12 +69,12 @@ export function EmployeesPage() {
     return () => unsub();
   }, []);
 
-  // Map real employees and cross-reference with enrolled workstation devices
+  // Map real employees and cross-reference with enrolled workstation devices (Scoped by RBAC)
   const employeesWithTelemetry = useMemo(() => {
-    if (crmStaff.length > 0) {
-      return crmStaff.map((staff) => {
+    if (scopedStaff.length > 0) {
+      return scopedStaff.map((staff) => {
         const emailLower = staff.email.toLowerCase();
-        const matchedDev = devices.find(
+        const matchedDev = scopedDevices.find(
           (d) => d.employeeEmail.toLowerCase() === emailLower || d.employeeId === staff.id
         );
 
@@ -108,7 +109,7 @@ export function EmployeesPage() {
       });
     }
 
-    return devices.map((dev) => ({
+    return scopedDevices.map((dev) => ({
       id: dev.deviceId || dev.id,
       firstName: dev.employeeName || dev.employeeEmail.split("@")[0],
       lastName: "",
@@ -129,7 +130,7 @@ export function EmployeesPage() {
       activeApp: dev.currentApp || "System",
       agentVersion: dev.agentVersion || "v1.2.0",
     }));
-  }, [crmStaff, devices]);
+  }, [scopedStaff, scopedDevices]);
 
   // Overall counts for filter badges and KPI cards
   const counts = useMemo(() => {
@@ -175,26 +176,17 @@ export function EmployeesPage() {
   // Unique foreground apps currently in use
   const availableApps = useMemo(() => {
     const set = new Set<string>();
-    devices.forEach((d) => {
+    scopedDevices.forEach((d) => {
       if (d.currentApp && d.currentApp !== "Standby" && d.currentApp !== "Not reporting") {
         set.add(d.currentApp);
       }
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [devices]);
+  }, [scopedDevices]);
 
   // Filtered & Sorted list
   const filteredList = useMemo(() => {
     const list = employeesWithTelemetry.filter((item) => {
-      // Manager department restriction
-      if (
-        isManager &&
-        user?.department &&
-        item.departmentName.trim().toLowerCase() !== user.department.trim().toLowerCase()
-      ) {
-        return false;
-      }
-
       // Department filter
       if (selectedDept !== "ALL" && item.departmentName.trim().toLowerCase() !== selectedDept.trim().toLowerCase()) {
         return false;

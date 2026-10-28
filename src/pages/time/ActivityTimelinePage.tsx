@@ -47,6 +47,7 @@ import {
   TelemetryDevice,
   CrmEmployeeSummary,
 } from "../../lib/telemetryService";
+import { useRbacScope } from "../../lib/rbacScope";
 
 export function ActivityTimelinePage() {
   const { user } = useAuth();
@@ -101,35 +102,67 @@ export function ActivityTimelinePage() {
     return () => unsubDevices();
   }, []);
 
-  // Unified, deduplicated employees from CRM + active devices
+  const {
+    role,
+    isSuperAdmin,
+    isManager,
+    isEmployee,
+    scopedStaff,
+    scopedEmailsSet,
+    canSwitchUser,
+  } = useRbacScope(crmStaff, devices);
+
+  // Unified, deduplicated employees scoped strictly by user role
   const availableEmployees = useMemo(() => {
+    // If regular Employee, ONLY allow themselves
+    if (isEmployee) {
+      const myEmail = (user?.email || "").trim().toLowerCase();
+      return [{ email: myEmail, name: user?.name || "Me" }];
+    }
+
     const map = new Map<string, { email: string; name: string }>();
-    crmStaff.forEach((s) => {
+    scopedStaff.forEach((s) => {
       const email = s.email?.trim().toLowerCase();
       if (email && !map.has(email)) {
         map.set(email, { email, name: s.name });
       }
     });
-    devices.forEach((d) => {
-      const email = d.employeeEmail?.trim().toLowerCase();
-      if (email && !map.has(email)) {
-        map.set(email, { email, name: d.employeeName || email.split("@")[0] });
-      }
-    });
+
+    // If Super Admin, also include any active devices not in CRM
+    if (isSuperAdmin) {
+      devices.forEach((d) => {
+        const email = d.employeeEmail?.trim().toLowerCase();
+        if (email && !map.has(email)) {
+          map.set(email, { email, name: d.employeeName || email.split("@")[0] });
+        }
+      });
+    }
+
     const list = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
     if (list.length === 0) {
       const defaultEmail = (user?.email || "ajay@gryphonacademy.co.in").toLowerCase();
       list.push({ email: defaultEmail, name: user?.name || "Ajay Pawar" });
     }
     return list;
-  }, [crmStaff, devices, user]);
+  }, [scopedStaff, devices, isEmployee, isSuperAdmin, user]);
 
   // Ensure an employee is selected once availableEmployees load
   useEffect(() => {
-    if (!selectedEmpEmail && availableEmployees.length > 0) {
-      setSelectedEmpEmail(availableEmployees[0].email);
+    if (isEmployee && user?.email) {
+      setSelectedEmpEmail(user.email.trim().toLowerCase());
+      return;
     }
-  }, [availableEmployees, selectedEmpEmail]);
+
+    const validEmails = availableEmployees.map((e) => e.email.toLowerCase());
+    if (!selectedEmpEmail || !validEmails.includes(selectedEmpEmail.toLowerCase())) {
+      const myEmail = (user?.email || "").toLowerCase();
+      if (validEmails.includes(myEmail)) {
+        setSelectedEmpEmail(myEmail);
+      } else if (availableEmployees.length > 0) {
+        setSelectedEmpEmail(availableEmployees[0].email);
+      }
+    }
+  }, [availableEmployees, selectedEmpEmail, isEmployee, user]);
 
   // Subscribe to Activity Logs for selected employee & date
   useEffect(() => {
@@ -259,20 +292,27 @@ export function ActivityTimelinePage() {
         actions={
           <div className="flex items-center gap-2.5 flex-wrap">
             {/* Employee Selector */}
-            <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs shadow-2xs">
-              <User className="w-3.5 h-3.5 text-gray-500" />
-              <select
-                value={selectedEmpEmail}
-                onChange={(e) => setSelectedEmpEmail(e.target.value)}
-                className="bg-transparent font-medium text-gray-900 focus:outline-none cursor-pointer pr-2 max-w-[200px] truncate"
-              >
-                {availableEmployees.map((emp) => (
-                  <option key={emp.email} value={emp.email}>
-                    {emp.name} ({emp.email})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {canSwitchUser ? (
+              <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs shadow-2xs">
+                <User className="w-3.5 h-3.5 text-gray-500" />
+                <select
+                  value={selectedEmpEmail}
+                  onChange={(e) => setSelectedEmpEmail(e.target.value)}
+                  className="bg-transparent font-medium text-gray-900 focus:outline-none cursor-pointer pr-2 max-w-[220px] truncate"
+                >
+                  {availableEmployees.map((emp) => (
+                    <option key={emp.email} value={emp.email}>
+                      {emp.name} ({emp.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700 shadow-2xs">
+                <User className="w-3.5 h-3.5 text-gray-500" />
+                <span className="font-medium">{user?.name || selectedEmpEmail}</span>
+              </div>
+            )}
 
             {/* Date Input */}
             <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs shadow-2xs">

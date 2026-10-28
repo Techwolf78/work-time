@@ -153,7 +153,7 @@ export function LoginPage() {
 
       {/* Simple Footer */}
       <footer className="max-w-md w-full mx-auto text-center text-xs text-neutral-400">
-        Gryphon Academy Pvt. Ltd. • Pune HQ
+        Gryphon Academy Pvt. Ltd.
       </footer>
     </div>
   );

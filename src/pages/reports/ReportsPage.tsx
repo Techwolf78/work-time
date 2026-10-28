@@ -37,7 +37,10 @@ import {
   DailySummaryRecord,
   TelemetryDevice,
   ActivityIntervalRecord,
+  fetchCrmEmployees,
+  CrmEmployeeSummary,
 } from "../../lib/telemetryService";
+import { useRbacScope } from "../../lib/rbacScope";
 
 type ReportTab = "DAILY_SUMMARY" | "APP_USAGE" | "WORKSTATION_HEALTH";
 
@@ -65,10 +68,11 @@ export function ReportsPage() {
   const { user } = useAuth();
   const { employees } = useHrms();
 
-  const role = user?.role || "SUPER_ADMIN";
-  const isSuperAdmin = role === "SUPER_ADMIN" || role === "HR_ADMIN";
-  const isManager = role === "MANAGER";
-  const isEmployee = !isSuperAdmin && !isManager;
+  const [crmStaff, setCrmStaff] = useState<CrmEmployeeSummary[]>([]);
+
+  useEffect(() => {
+    fetchCrmEmployees().then(setCrmStaff);
+  }, []);
 
   const [activeTab, setActiveTab] = useState<ReportTab>("DAILY_SUMMARY");
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,7 +124,19 @@ export function ReportsPage() {
     };
   }, []);
 
-  // Map Real Daily Summary Records from Firestore
+  // Centralized RBAC Scope
+  const {
+    role,
+    isSuperAdmin,
+    isManager,
+    isEmployee,
+    scopedStaff,
+    scopedEmailsSet,
+    scopedDevices,
+    scopedLogs,
+  } = useRbacScope(crmStaff, liveDevices, liveLogs);
+
+  // Map Real Daily Summary Records from Firestore (Scoped by RBAC)
   const dailySummaryData = useMemo<DailyRecord[]>(() => {
     const list: DailyRecord[] = liveSummaries.map((s) => ({
       date: s.date,
@@ -142,22 +158,15 @@ export function ReportsPage() {
       status: s.status,
     }));
 
-    if (isEmployee) {
-      const myEmail = (user?.email || "").toLowerCase();
-      return list.filter(
-        (r) =>
-          r.empId.toLowerCase() === myEmail ||
-          r.empId === user?.employeeId
-      );
-    }
-
-    if (isManager) {
-      const myDept = (user?.crmDepartment || user?.department || "Engineering").toLowerCase();
-      return list.filter((r) => r.dept.toLowerCase() === myDept);
+    if (isEmployee || isManager) {
+      return list.filter((r) => {
+        const idLower = (r.empId || "").toLowerCase();
+        return scopedEmailsSet.has(idLower) || (user?.email && idLower === user.email.toLowerCase());
+      });
     }
 
     return list;
-  }, [liveSummaries, isEmployee, isManager, user, todayStr]);
+  }, [liveSummaries, isEmployee, isManager, scopedEmailsSet, user, todayStr]);
 
   // Dynamic Personal App Usage aggregated from real logs
   const employeePersonalApps = useMemo(() => {
@@ -202,7 +211,9 @@ export function ReportsPage() {
     const appMap: Record<string, { seconds: number; exe: string; category: "Work" | "Neutral" | "Restricted"; users: Set<string> }> = {};
     let totalSec = 0;
 
-    liveLogs.forEach((l) => {
+    const targetLogs = isSuperAdmin ? liveLogs : scopedLogs;
+
+    targetLogs.forEach((l) => {
       const app = l.executable || "System";
       if (!appMap[app]) {
         appMap[app] = {
@@ -227,11 +238,12 @@ export function ReportsPage() {
         pct: totalSec > 0 ? Math.round((d.seconds / totalSec) * 100) : 0,
       }))
       .sort((a, b) => b.pct - a.pct);
-  }, [liveLogs]);
+  }, [liveLogs, scopedLogs, isSuperAdmin]);
 
-  // Workstation Hardware Telemetry Dataset from liveDevices
+  // Workstation Hardware Telemetry Dataset from liveDevices (scoped by RBAC)
   const workstationData = useMemo(() => {
-    return liveDevices.map((d) => ({
+    const targetDevices = isSuperAdmin ? liveDevices : scopedDevices;
+    return targetDevices.map((d) => ({
       hostname: d.hostname,
       user: d.employeeName,
       os: d.os,
@@ -240,7 +252,7 @@ export function ReportsPage() {
       status: d.online ? (d.status === "active" ? "Online" : "Idle") : "Offline",
       lastSync: d.lastHeartbeat ? new Date(d.lastHeartbeat).toLocaleTimeString() : "Never",
     }));
-  }, [liveDevices]);
+  }, [liveDevices, scopedDevices, isSuperAdmin]);
 
   // Filtered Daily Records
   const filteredDailySummary = useMemo(() => {

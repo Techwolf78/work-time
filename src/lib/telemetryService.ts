@@ -123,6 +123,8 @@ export interface CrmEmployeeSummary {
   department: string;
   role: string;
   designation?: string;
+  reportingManager?: string;
+  managerEmail?: string;
   status: "active" | "inactive";
 }
 
@@ -765,6 +767,8 @@ export async function fetchCrmEmployees(): Promise<CrmEmployeeSummary[]> {
           department: d.department || d.departments?.[0] || "Operations",
           role: d.role || "Executive",
           designation: d.role || "Staff",
+          reportingManager: d.reportingManager || d.manager || "",
+          managerEmail: d.managerEmail || "",
           status: d.isActive !== false ? "active" : "inactive",
         });
       }

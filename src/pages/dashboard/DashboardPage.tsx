@@ -35,17 +35,15 @@ import {
   TelemetryDevice,
   DailySummaryRecord,
   ActivityIntervalRecord,
+  fetchCrmEmployees,
+  CrmEmployeeSummary,
 } from "../../lib/telemetryService";
+import { useRbacScope } from "../../lib/rbacScope";
 
 export function DashboardPage() {
   const { user } = useAuth();
   const { employees, departments } = useHrms();
   const navigate = useNavigate();
-
-  const role = user?.role || "SUPER_ADMIN";
-  const isSuperAdmin = role === "SUPER_ADMIN" || role === "HR_ADMIN";
-  const isManager = role === "MANAGER";
-  const isEmployee = !isSuperAdmin && !isManager;
 
   const todayStr = useMemo(() => getTodayDateString(), []);
   const todayFormatted = useMemo(() => {
@@ -58,6 +56,7 @@ export function DashboardPage() {
   }, []);
 
   // Real-time Firestore States
+  const [crmStaff, setCrmStaff] = useState<CrmEmployeeSummary[]>([]);
   const [devices, setDevices] = useState<TelemetryDevice[]>([]);
   const [dailySummaries, setDailySummaries] = useState<DailySummaryRecord[]>([]);
   const [todayLogs, setTodayLogs] = useState<ActivityIntervalRecord[]>([]);
@@ -68,6 +67,7 @@ export function DashboardPage() {
   // Subscribe to Live Firestore Streams
   useEffect(() => {
     setIsLoading(true);
+    fetchCrmEmployees().then(setCrmStaff);
 
     // 1. Subscribe to Live Workstation Devices
     const unsubDevices = subscribeToTelemetryDevices((devs) => {
@@ -100,6 +100,16 @@ export function DashboardPage() {
     };
   }, [todayStr]);
 
+  // Centralized RBAC Scope
+  const {
+    isSuperAdmin,
+    isManager,
+    isEmployee,
+    scopedStaff,
+    scopedEmailsSet,
+    scopedDevices,
+  } = useRbacScope(crmStaff, devices, todayLogs);
+
   // Find current employee's device and summary
   const myEmail = (user?.email || "").toLowerCase();
   const myDevice = devices.find(
@@ -114,32 +124,32 @@ export function DashboardPage() {
       s.employeeId === user?.employeeId
   );
 
-  // Compute Fleet Totals
+  // Filter for Manager / Admin devices & summaries
+  const targetDevices = isSuperAdmin ? devices : scopedDevices;
+  const targetSummaries = useMemo(() => {
+    if (isSuperAdmin) return dailySummaries;
+    return dailySummaries.filter((s) => scopedEmailsSet.has((s.employeeEmail || "").toLowerCase()));
+  }, [dailySummaries, isSuperAdmin, scopedEmailsSet]);
+
+  // Compute Team / Fleet Totals
   const fleetTotalSeconds = useMemo(() => {
-    return dailySummaries.reduce((acc, curr) => acc + (curr.observedSeconds || 0), 0);
-  }, [dailySummaries]);
+    return targetSummaries.reduce((acc, curr) => acc + (curr.observedSeconds || 0), 0);
+  }, [targetSummaries]);
 
   const fleetActiveSeconds = useMemo(() => {
-    return dailySummaries.reduce((acc, curr) => acc + (curr.activeSeconds || 0), 0);
-  }, [dailySummaries]);
+    return targetSummaries.reduce((acc, curr) => acc + (curr.activeSeconds || 0), 0);
+  }, [targetSummaries]);
 
   const fleetFocusRatio = useMemo(() => {
     if (fleetTotalSeconds <= 0) return "100%";
     return `${Math.round((fleetActiveSeconds / fleetTotalSeconds) * 100)}%`;
   }, [fleetTotalSeconds, fleetActiveSeconds]);
 
-  const onlineDevicesCount = devices.filter((d) => d.online && d.status === "active").length;
-  const idleDevicesCount = devices.filter((d) => d.online && d.status === "idle").length;
-  const offlineDevicesCount = devices.filter((d) => !d.online || d.status === "offline").length;
+  const onlineDevicesCount = targetDevices.filter((d) => d.online && d.status === "active").length;
+  const idleDevicesCount = targetDevices.filter((d) => d.online && d.status === "idle").length;
+  const offlineDevicesCount = targetDevices.filter((d) => !d.online || d.status === "offline").length;
 
-  // Filter for Manager (by department)
-  const managerDevices = useMemo(() => {
-    if (!isManager) return devices;
-    const dept = user?.crmDepartment || user?.department || "Engineering";
-    return devices.filter(
-      (d) => !d.department || d.department.toLowerCase() === dept.toLowerCase()
-    );
-  }, [devices, isManager, user]);
+  const managerDevices = targetDevices;
 
   // Personal app breakdown from today's real logs
   const personalAppBreakdown = useMemo(() => {
@@ -303,7 +313,7 @@ export function DashboardPage() {
             <p className="text-xs font-medium text-text-muted">Online Members</p>
             <p className="text-2xl font-bold text-gray-950 mt-1">
               {managerDevices.filter((m) => m.online && m.status === "active").length} /{" "}
-              {Math.max(1, managerDevices.length)}
+              {Math.max(1, scopedStaff.length || managerDevices.length)}
             </p>
             <p className="text-[11px] text-text-muted mt-0.5">Active foreground windows</p>
           </div>

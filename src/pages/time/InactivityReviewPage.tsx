@@ -24,12 +24,15 @@ import { db } from "../../lib/firebase";
 import { TIMETRACK_COLLECTIONS } from "../../lib/collections";
 import {
   subscribeToActivityLogs,
+  fetchCrmEmployees,
   formatSecondsToDuration,
   getTodayDateString,
   ActivityIntervalRecord,
   ConsolidatedIntervalRecord,
   consolidateActivityIntervals,
+  CrmEmployeeSummary,
 } from "../../lib/telemetryService";
+import { useRbacScope } from "../../lib/rbacScope";
 import { useAuth } from "../../lib/authContext";
 
 const ANNOTATION_CATEGORIES = [
@@ -43,28 +46,44 @@ const ANNOTATION_CATEGORIES = [
 
 export function InactivityReviewPage() {
   const { user } = useAuth();
-  const [logs, setLogs] = useState<(ActivityIntervalRecord | ConsolidatedIntervalRecord)[]>([]);
+  const [rawLogs, setRawLogs] = useState<ActivityIntervalRecord[]>([]);
+  const [crmStaff, setCrmStaff] = useState<CrmEmployeeSummary[]>([]);
   const [dateFilter, setDateFilter] = useState<string>(getTodayDateString());
   const [selectedInterval, setSelectedInterval] = useState<(ActivityIntervalRecord | ConsolidatedIntervalRecord) | null>(null);
   const [reasonCategory, setReasonCategory] = useState("Client Call / Meeting");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load CRM staff for RBAC team mapping
+  useEffect(() => {
+    fetchCrmEmployees().then((staff) => setCrmStaff(staff));
+  }, []);
+
   // Subscribe to idle logs for selected date
   useEffect(() => {
     const unsubscribe = subscribeToActivityLogs(
       { date: dateFilter },
       (fetchedLogs) => {
-        // Consolidate continuous intervals so repetitive 15s ticks club into single clean sessions
-        const consolidated = consolidateActivityIntervals(fetchedLogs);
-        const idleItems = consolidated.filter(
-          (l) => l.state === "idle" || l.state === "locked" || (l.durationSeconds && l.durationSeconds >= 180)
-        );
-        setLogs(idleItems);
+        setRawLogs(fetchedLogs);
       }
     );
     return () => unsubscribe();
   }, [dateFilter]);
+
+  // Centralized RBAC Scoping
+  const { isManager, isEmployee, isSuperAdmin, scopedLogs, scopedStaff } = useRbacScope(
+    crmStaff,
+    [],
+    rawLogs
+  );
+
+  // Consolidate idle logs strictly from scoped logs
+  const logs = useMemo(() => {
+    const consolidated = consolidateActivityIntervals(scopedLogs);
+    return consolidated.filter(
+      (l) => l.state === "idle" || l.state === "locked" || (l.durationSeconds && l.durationSeconds >= 180)
+    );
+  }, [scopedLogs]);
 
   // KPIs
   const totalIdleSeconds = useMemo(() => {
@@ -136,7 +155,13 @@ export function InactivityReviewPage() {
     <div className="space-y-6">
       <PageHeader
         title="Inactivity Review & Offline Annotations"
-        subtitle="Review workstation idle periods and annotate legitimate offline work (client calls, team discussions, lunch/tea breaks)."
+        subtitle={
+          isManager
+            ? `Review workstation idle periods and annotate legitimate offline work across your team (${scopedStaff.length} members).`
+            : isEmployee
+            ? "Review your workstation idle periods and annotate legitimate offline work (client calls, lunch/tea breaks)."
+            : "Review workstation idle periods and annotate legitimate offline work (client calls, team discussions, lunch/tea breaks)."
+        }
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Telemetry & Time" },

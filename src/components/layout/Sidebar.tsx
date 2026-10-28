@@ -175,7 +175,7 @@ export function Sidebar({
               </p>
               <p className="text-[10px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>Pune HQ</span>
+                <span>Enterprise Workspace</span>
               </p>
             </div>
           </div>

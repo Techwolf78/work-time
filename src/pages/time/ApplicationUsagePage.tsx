@@ -20,11 +20,14 @@ import { Input } from "../../components/ui/Input";
 import {
   subscribeToActivityLogs,
   subscribeToTelemetryDevices,
+  fetchCrmEmployees,
   formatSecondsToDuration,
   getTodayDateString,
   ActivityIntervalRecord,
   TelemetryDevice,
+  CrmEmployeeSummary,
 } from "../../lib/telemetryService";
+import { useRbacScope } from "../../lib/rbacScope";
 
 interface AppUsageSummary {
   executable: string;
@@ -72,9 +75,15 @@ function classifyApp(appName: string): "work" | "neutral" | "restricted" {
 export function ApplicationUsagePage() {
   const [logs, setLogs] = useState<ActivityIntervalRecord[]>([]);
   const [devices, setDevices] = useState<TelemetryDevice[]>([]);
+  const [crmStaff, setCrmStaff] = useState<CrmEmployeeSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>(getTodayDateString());
+
+  // Load CRM staff for RBAC team mapping
+  useEffect(() => {
+    fetchCrmEmployees().then((staff) => setCrmStaff(staff));
+  }, []);
 
   // Subscribe to real-time activity intervals
   useEffect(() => {
@@ -95,7 +104,14 @@ export function ApplicationUsagePage() {
     };
   }, [dateFilter]);
 
-  // Aggregate logs into application metrics
+  // Centralized RBAC Scoping
+  const { isManager, isEmployee, isSuperAdmin, scopedLogs, scopedStaff } = useRbacScope(
+    crmStaff,
+    devices,
+    logs
+  );
+
+  // Aggregate scoped logs into application metrics
   const { appList, totalTrackedSeconds, workSeconds, neutralSeconds, restrictedSeconds } =
     useMemo(() => {
       const map = new Map<string, AppUsageSummary>();
@@ -104,7 +120,7 @@ export function ApplicationUsagePage() {
       let restrictedSec = 0;
       let totalSec = 0;
 
-      logs.forEach((log) => {
+      scopedLogs.forEach((log) => {
         const app = log.executable || "System";
         const cat = log.category || classifyApp(app);
         const dur = log.durationSeconds || 15;
@@ -172,7 +188,7 @@ export function ApplicationUsagePage() {
         neutralSeconds: neutralSec,
         restrictedSeconds: restrictedSec,
       };
-    }, [logs, devices]);
+    }, [scopedLogs, devices]);
 
   // Filtered list
   const filteredApps = useMemo(() => {
@@ -219,7 +235,13 @@ export function ApplicationUsagePage() {
     <div className="space-y-6">
       <PageHeader
         title="Application Usage & Foreground Analytics"
-        subtitle="Autonomous tracking of foreground window focus durations and application categorization streamed from desktop agents."
+        subtitle={
+          isManager
+            ? `Autonomous tracking of foreground window focus durations across your team (${scopedStaff.length} members).`
+            : isEmployee
+            ? "Autonomous tracking of your workstation foreground window focus durations."
+            : "Autonomous tracking of foreground window focus durations and application categorization streamed from desktop agents."
+        }
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Telemetry & Time" },
