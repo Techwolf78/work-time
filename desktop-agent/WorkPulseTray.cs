@@ -23,12 +23,24 @@ namespace GaWorkTime {
     public class Program {
         private static System.Threading.Mutex singleMutex = null;
 
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern uint RegisterWindowMessage(string lpString);
+
+        [DllImport("user32.dll")]
+        public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        public const int HWND_BROADCAST = 0xffff;
+        public const string UNIQUE_MSG_ID = "GA_WORK_TIME_RESTORE_WINDOW";
+
         [STAThread]
         public static void Main(string[] args) {
             try {
                 bool isNewInstance = false;
                 singleMutex = new System.Threading.Mutex(true, "GA_Work_Time_Unique_Agent_Mutex", out isNewInstance);
                 if (!isNewInstance) {
+                    // Signal the already running background instance to restore and show its window!
+                    uint showMsg = RegisterWindowMessage(UNIQUE_MSG_ID);
+                    PostMessage((IntPtr)HWND_BROADCAST, showMsg, IntPtr.Zero, IntPtr.Zero);
                     return;
                 }
             } catch { }
@@ -48,6 +60,41 @@ namespace GaWorkTime {
         private const string FIREBASE_PROJECT = "authencation-39485";
         private const string FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/" + FIREBASE_PROJECT + "/databases/(default)/documents/";
         private string updateCheckUrl = "http://localhost:5173/version.json";
+
+        // Inter-process wakeup message
+        private static readonly uint WM_SHOWME = Program.RegisterWindowMessage(Program.UNIQUE_MSG_ID);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        protected override CreateParams CreateParams {
+            get {
+                CreateParams cp = base.CreateParams;
+                cp.Style |= 0x20000; // WS_MINIMIZEBOX (Allows clicking Taskbar icon to toggle minimize/restore)
+                cp.ClassStyle |= 0x8; // CS_DBLCLKS
+                return cp;
+            }
+        }
+
+        protected override void WndProc(ref Message m) {
+            if (m.Msg == (int)WM_SHOWME) {
+                RestoreAndBringToFront();
+            }
+            base.WndProc(ref m);
+        }
+
+        public void RestoreAndBringToFront() {
+            try {
+                this.Show();
+                this.ShowInTaskbar = true;
+                if (this.WindowState == FormWindowState.Minimized) {
+                    this.WindowState = FormWindowState.Normal;
+                }
+                this.BringToFront();
+                this.Activate();
+                SetForegroundWindow(this.Handle);
+            } catch { }
+        }
 
         // Win32 API Imports for Dragging & Activity Probing
         [DllImport("user32.dll")]
@@ -199,7 +246,7 @@ namespace GaWorkTime {
                 AutoSize = true
             };
 
-            // Window Close button (Minimizes to tray)
+            // Window Close button (Minimizes to taskbar so user knows it's alive!)
             Button closeBtn = new Button() {
                 Text = "✕",
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
@@ -214,8 +261,7 @@ namespace GaWorkTime {
             closeBtn.MouseEnter += (s, e) => { closeBtn.ForeColor = Color.White; closeBtn.BackColor = Color.FromArgb(239, 68, 68); };
             closeBtn.MouseLeave += (s, e) => { closeBtn.ForeColor = Color.FromArgb(148, 163, 184); closeBtn.BackColor = Color.Transparent; };
             closeBtn.Click += (s, e) => {
-                this.Hide();
-                trayIcon.ShowBalloonTip(2000, "GA WORK-TIME Running in Background", "Tracking continues silently in your system tray.", ToolTipIcon.Info);
+                this.WindowState = FormWindowState.Minimized;
             };
 
             // Window Minimize button
@@ -688,10 +734,10 @@ namespace GaWorkTime {
 
             ToolStripMenuItem titleItem = new ToolStripMenuItem("GA WORK-TIME • Active Focus") { Enabled = false, Font = new Font("Segoe UI", 9, FontStyle.Bold) };
             ToolStripMenuItem openWindowItem = new ToolStripMenuItem("Open GA WORK-TIME Window", null, (s, e) => {
-                this.Show();
-                this.WindowState = FormWindowState.Normal;
-                this.BringToFront();
+                RestoreAndBringToFront();
             });
+            openWindowItem.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+
             ToolStripMenuItem checkUpdateItem = new ToolStripMenuItem("Check for Updates...", null, (s, e) => {
                 CheckForUpdatesAsync();
                 MessageBox.Show("GA WORK-TIME is checking for the latest version...", "Auto-Updater", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -715,13 +761,16 @@ namespace GaWorkTime {
             trayIcon = new NotifyIcon() {
                 Icon = CreatePulseIcon(),
                 ContextMenuStrip = trayMenu,
-                Text = "GA WORK-TIME • v" + CURRENT_VERSION,
+                Text = "GA WORK-TIME • Active & Tracking",
                 Visible = true
             };
+            trayIcon.MouseClick += (s, e) => {
+                if (e.Button == MouseButtons.Left) {
+                    RestoreAndBringToFront();
+                }
+            };
             trayIcon.DoubleClick += (s, e) => {
-                this.Show();
-                this.WindowState = FormWindowState.Normal;
-                this.BringToFront();
+                RestoreAndBringToFront();
             };
         }
 
