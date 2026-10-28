@@ -60,7 +60,7 @@ export function AppShell({
 
         <main
           className={cn(
-            "flex-1 w-full animate-fade-in transition-all duration-200",
+            "flex-1 w-full",
             settings?.compactMode
               ? "p-3 sm:p-4 lg:p-5"
               : "p-4 sm:p-6 lg:p-8"

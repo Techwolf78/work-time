@@ -11,6 +11,8 @@ export function LandingPage() {
   const { isAuthenticated } = useAuth();
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [showUnblockGuide, setShowUnblockGuide] = useState(false);
+  const [copiedCli, setCopiedCli] = useState(false);
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 flex flex-col justify-between selection:bg-neutral-900 selection:text-white">
@@ -89,20 +91,83 @@ export function LandingPage() {
                 <a
                   href="/downloads/GA-Work-Time.exe"
                   download="GA-Work-Time.exe"
+                  onClick={() => setShowUnblockGuide(true)}
                   className="inline-flex items-center justify-center px-3 py-2 rounded-lg bg-white border border-neutral-300 hover:bg-neutral-100 text-neutral-700 text-xs font-medium transition-colors"
                   title="Direct .exe download"
                 >
                   <span>.exe</span>
                 </a>
+                <button
+                  type="button"
+                  onClick={() => setShowUnblockGuide(!showUnblockGuide)}
+                  className="text-[11px] text-blue-600 hover:text-blue-700 underline font-medium ml-1"
+                >
+                  Chrome blocked?
+                </button>
               </div>
             </div>
 
-            {/* Subtle download helper tip */}
-            <div className="text-[11px] text-neutral-500 bg-white border border-neutral-200/80 rounded-md px-3 py-2 leading-relaxed">
-              <span>
-                <strong>Download note:</strong> Use <strong>.zip</strong> for direct download without browser prompts, or <strong>.exe</strong> (if Chrome prompts, click <em>"Download suspicious file"</em>).
-              </span>
-            </div>
+            {/* Interactive Chrome Unblock & Fast Install Guidance */}
+            {showUnblockGuide ? (
+              <div className="bg-amber-50/80 border border-amber-200 rounded-lg p-3.5 space-y-3 animate-fade-in text-xs text-amber-950">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-semibold text-amber-900 flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-amber-200 text-amber-800 flex items-center justify-center text-[10px] font-bold">!</span>
+                    Chrome says "Suspicious download blocked"? (2-Click Fix)
+                  </div>
+                  <button
+                    onClick={() => setShowUnblockGuide(false)}
+                    className="text-amber-700 hover:text-amber-950 text-xs font-bold px-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  Google Chrome automatically flags newly-launched corporate <code>.exe</code> downloads as a generic precaution until verified by domain volume. The file is 100% clean and virus-free.
+                </p>
+
+                <div className="bg-white border border-amber-200/90 rounded-md p-2.5 space-y-1.5 text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+                    <span>In Chrome's top-right download menu, click the small arrow <strong>(&gt;)</strong> next to <em>GA-Work-Time.exe</em>.</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+                    <span>Click <strong>"Download suspicious file"</strong> (or <strong>"Keep anyway"</strong>) to finish saving.</span>
+                  </div>
+                </div>
+
+                <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-amber-200/60">
+                  <span className="text-[11px] text-amber-900">
+                    Or run 1-click install via PowerShell (no browser warnings):
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("irm https://work-time-lyart.vercel.app/install.ps1 | iex");
+                      setCopiedCli(true);
+                      setTimeout(() => setCopiedCli(false), 2000);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 text-[11px] font-mono border border-amber-300 transition-colors shrink-0"
+                  >
+                    <span>{copiedCli ? "✓ Command Copied!" : "Copy PowerShell Command"}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-[11px] text-neutral-500 bg-white border border-neutral-200/80 rounded-md px-3 py-2 leading-relaxed flex items-center justify-between flex-wrap gap-2">
+                <span>
+                  <strong>Tip:</strong> Use <strong>.zip</strong> for instant download with zero browser prompts. If using <strong>.exe</strong>, click the <strong>(&gt;)</strong> arrow in Chrome &rarr; <em>"Download suspicious file"</em>.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowUnblockGuide(true)}
+                  className="text-neutral-900 hover:underline font-medium text-[11px]"
+                >
+                  View Chrome steps &rarr;
+                </button>
+              </div>
+            )}
 
             <div className="pt-2 border-t border-neutral-200/80 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-neutral-600">
               <span className="flex items-center gap-1.5">

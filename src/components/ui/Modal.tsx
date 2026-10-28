@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -56,18 +57,18 @@ export function Modal({
     full: "max-w-[96vw] w-[96vw]",
   };
 
-  return (
-    <div className={cn("fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto", containerClassName)}>
+  const modalContent = (
+    <div className={cn("fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto", containerClassName)}>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in"
+        className="fixed inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
       <div
         className={cn(
-          "relative w-full bg-white rounded-card shadow-elevated border border-surface-border overflow-hidden z-10 animate-scale-in my-8 flex flex-col max-h-[92vh]",
+          "relative w-full bg-white rounded-2xl shadow-2xl border border-surface-border overflow-hidden z-10 animate-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]",
           sizeClasses[size],
           className,
         )}
@@ -112,4 +113,8 @@ export function Modal({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(modalContent, document.body)
+    : modalContent;
 }

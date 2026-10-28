@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { Card } from "../../components/ui/Card";
@@ -829,15 +830,17 @@ export function ActivityTimelinePage() {
       </Card>
 
       {/* DETAILED 15-SECOND DISTRIBUTION POPUP MODAL */}
-      {selectedSessionModal && (
-        <div
-          className="fixed inset-0 z-50 bg-gray-950/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
-          onClick={() => setSelectedSessionModal(null)}
-        >
+      {selectedSessionModal &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
+            onClick={() => setSelectedSessionModal(null)}
           >
+            <div
+              className="bg-white rounded-2xl shadow-2xl border border-gray-200/90 w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-gray-200 flex items-start justify-between gap-4 bg-gray-50/70">
               <div className="flex items-center gap-3">
@@ -1036,19 +1039,22 @@ export function ActivityTimelinePage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* DETAILED CLUBBED APPLICATION MODAL POPUP */}
-      {selectedAppModal && (
-        <div
-          className="fixed inset-0 z-50 bg-gray-950/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
-          onClick={() => setSelectedAppModal(null)}
-        >
+      {selectedAppModal &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
+            onClick={() => setSelectedAppModal(null)}
           >
+            <div
+              className="bg-white rounded-2xl shadow-2xl border border-gray-200/90 w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/70 flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -1256,7 +1262,8 @@ export function ActivityTimelinePage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

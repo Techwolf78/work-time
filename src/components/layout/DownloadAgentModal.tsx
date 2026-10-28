@@ -151,17 +151,30 @@ export function DownloadAgentModal({ isOpen, onClose }: DownloadAgentModalProps)
         </div>
 
         {/* First-time Download / SmartScreen Guidance */}
-        <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-lg text-xs text-amber-950 flex items-start gap-2.5">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <div className="space-y-1 text-[11px] leading-relaxed">
-            <p className="font-semibold text-amber-950">Chrome or Windows SmartScreen Note:</p>
-            <p className="text-amber-900">
-              Because this is a freshly compiled corporate desktop client, Chrome may warn that the file is <em>"uncommonly downloaded"</em> and Windows may show <em>"Windows protected your PC"</em>.
-            </p>
-            <p className="text-amber-800">
-              • In Chrome: Click the download options menu → select <strong>"Keep"</strong> (or <strong>"Keep anyway"</strong>).<br />
-              • In Windows: Click <strong>"More info"</strong> → select <strong>"Run anyway"</strong>.
-            </p>
+        <div className="p-3 bg-amber-50/80 border border-amber-200/90 rounded-lg text-xs text-amber-950 space-y-2.5">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1 text-[11px] leading-relaxed">
+              <p className="font-semibold text-amber-950">If Chrome blocks the .exe as "Suspicious download blocked":</p>
+              <p className="text-amber-900">
+                1. Look at Chrome's top-right download bubble &rarr; click the small arrow <strong>(&gt;)</strong> next to <em>GA-Work-Time.exe</em>.<br />
+                2. Click <strong>"Download suspicious file"</strong> (or <em>"Keep anyway"</em>).<br />
+                <em>(This happens because Google Safe Browsing flags newly published cloud domains as a precaution. The file is 100% verified.)</em>
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-amber-200/70 flex items-center justify-between flex-wrap gap-2 text-[11px]">
+            <span className="text-amber-900">Zero-warning alternative:</span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText("irm https://work-time-lyart.vercel.app/install.ps1 | iex");
+                alert("PowerShell 1-Click Install command copied! Open PowerShell and press Enter.");
+              }}
+              className="px-2 py-0.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 font-mono border border-amber-300 text-[10.5px] transition-colors"
+            >
+              Copy PowerShell 1-Click Command
+            </button>
           </div>
         </div>
       </div>
