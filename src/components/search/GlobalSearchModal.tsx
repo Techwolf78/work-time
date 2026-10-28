@@ -271,19 +271,40 @@ export function GlobalSearchModal({
     inputRef.current?.focus();
   };
 
-  if (!isOpen) return null;
+  // Category filter tabs based on role eligibility
+  const categories: { id: SearchCategory; label: string }[] = useMemo(() => {
+    if (role === "EMPLOYEE") {
+      return [
+        { id: "ALL", label: "All" },
+        { id: "ACTIVITY", label: "My Activity" },
+        { id: "DEVICES", label: "Workstation" },
+        { id: "PAGES", label: "Navigation" },
+      ];
+    }
+    return [
+      { id: "ALL", label: "All" },
+      { id: "ACTIVITY", label: "Time & Activity" },
+      { id: "DEVICES", label: "Workstations" },
+      { id: "PEOPLE", label: "Team" },
+      { id: "REPORTS", label: "Reports" },
+      { id: "PAGES", label: "Navigation" },
+    ];
+  }, [role]);
 
-  // Category filter tabs
-  const categories: { id: SearchCategory; label: string }[] = [
-    { id: "ALL", label: "All" },
-    { id: "ACTIVITY", label: "Time & Activity" },
-    { id: "DEVICES", label: "Workstations" },
-    { id: "PEOPLE", label: "Team" },
-    { id: "REPORTS", label: "Reports" },
-    { id: "PAGES", label: "Navigation" },
-  ];
+  // Ensure activeCategory stays valid for the current role
+  useEffect(() => {
+    if (!categories.some((c) => c.id === activeCategory)) {
+      setActiveCategory("ALL");
+    }
+  }, [categories, activeCategory]);
 
   const isIdle = !query.trim();
+  const searchPlaceholder =
+    role === "EMPLOYEE"
+      ? "Search activity, timeline, workstation..."
+      : "Search people, workstations, timeline, reports...";
+
+  if (!isOpen) return null;
 
   return (
     <div
@@ -313,8 +334,8 @@ export function GlobalSearchModal({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search anything..."
-            aria-label="Search anything"
+            placeholder={searchPlaceholder}
+            aria-label="Search"
             className="w-full text-sm bg-transparent border-none text-gray-900 placeholder:text-gray-400 focus:outline-none"
           />
 

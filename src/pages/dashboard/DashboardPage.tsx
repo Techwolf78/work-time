@@ -231,31 +231,33 @@ export function DashboardPage() {
 
         {/* Header Indicators */}
         <div className="flex items-center gap-2 text-xs">
-          <div
-            className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium border",
-              onlineDevicesCount > 0 || (myDevice && myDevice.online)
-                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                : "bg-gray-100 text-gray-600 border-gray-200"
-            )}
-          >
-            <span
-              className={cn(
-                "w-2 h-2 rounded-full",
-                onlineDevicesCount > 0 || (myDevice && myDevice.online)
-                  ? "bg-emerald-500 animate-pulse"
-                  : "bg-gray-400"
-              )}
-            ></span>
-            <span>
-              {onlineDevicesCount > 0
-                ? `${onlineDevicesCount} Agent${onlineDevicesCount > 1 ? "s" : ""} Online`
-                : myDevice?.online
-                ? "Agent Active"
-                : "Agent Offline"}
-            </span>
-          </div>
-          <span className="text-gray-400">|</span>
+          {!isEmployee && (
+            <>
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium border",
+                  onlineDevicesCount > 0
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    : "bg-gray-100 text-gray-600 border-gray-200"
+                )}
+              >
+                <span
+                  className={cn(
+                    "w-2 h-2 rounded-full",
+                    onlineDevicesCount > 0
+                      ? "bg-emerald-500 animate-pulse"
+                      : "bg-gray-400"
+                  )}
+                />
+                <span>
+                  {onlineDevicesCount > 0
+                    ? `${onlineDevicesCount} Agent${onlineDevicesCount > 1 ? "s" : ""} Online`
+                    : "No Agents Online"}
+                </span>
+              </div>
+              <span className="text-gray-400">|</span>
+            </>
+          )}
           <span className="text-text-muted font-medium">{todayFormatted}</span>
         </div>
       </div>

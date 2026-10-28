@@ -28,7 +28,7 @@ export function LandingPage() {
             onClick={() => setShowPrivacyModal(true)}
             className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors"
           >
-            Privacy Charter
+            Privacy Policy
           </button>
 
           {isAuthenticated ? (

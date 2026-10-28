@@ -111,12 +111,14 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
         {/* Desktop / Tablet Global Search Input Button */}
         <button
           onClick={onOpenSearch}
-          aria-label="Search anything"
+          aria-label="Search"
           className="hidden sm:flex w-full items-center justify-between px-3.5 py-2 bg-surface-bg border border-surface-border rounded-input text-sm text-text-muted hover:border-gray-400 hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-950/5 focus:border-gray-400 transition-all shadow-xs group"
         >
           <div className="flex items-center gap-2.5">
             <Search className="w-4 h-4 text-text-muted group-hover:text-gray-950 transition-colors" />
-            <span className="truncate">Search anything...</span>
+            <span className="truncate">
+              {user?.role === "EMPLOYEE" ? "Search activity, timeline..." : "Search anything..."}
+            </span>
           </div>
           <kbd className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded shadow-2xs">
             {typeof window !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
@@ -138,22 +140,14 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: TopbarProps) {
           <span>Desktop App</span>
         </button>
 
-        {/* Live Windows Endpoint Telemetry Badge */}
-        <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-medium shadow-2xs">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span>Agent Online • Win11</span>
-        </div>
 
-        {/* Privacy Charter Trigger */}
+        {/* Privacy Policy Trigger */}
         <button
           onClick={() => setShowPrivacyModal(true)}
           className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-gray-100 border border-transparent hover:border-surface-border transition-all"
-          title="Workforce Privacy by Design Charter"
+          title="Privacy Policy"
         >
-          <Shield className="w-3.5 h-3.5 text-emerald-600" />
+          <Shield className="w-3.5 h-3.5 text-gray-700" />
           <span>Privacy</span>
         </button>
 
